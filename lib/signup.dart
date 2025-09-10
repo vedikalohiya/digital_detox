@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'signup1.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
@@ -78,7 +79,12 @@ class SignupPage extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    // TODO: Implement next action
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const Signup1Page(),
+                      ),
+                    );
                   },
                   child: const Text(
                     'Next',
