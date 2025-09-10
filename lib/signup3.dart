@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
-import 'signup3.dart';
+import 'signup4.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
 
-enum Gender { male, female, other, undisclosed }
-
-class Signup2Page extends StatefulWidget {
-  const Signup2Page({Key? key}) : super(key: key);
+class Signup3Page extends StatefulWidget {
+  const Signup3Page({Key? key}) : super(key: key);
 
   @override
-  State<Signup2Page> createState() => _Signup2PageState();
+  State<Signup3Page> createState() => _Signup3PageState();
 }
 
-class _Signup2PageState extends State<Signup2Page> {
-  Gender? _selectedGender;
+class _Signup3PageState extends State<Signup3Page> {
+  double _screenTime = 2.0; // default 2 hours
 
   @override
   Widget build(BuildContext context) {
@@ -36,13 +34,13 @@ class _Signup2PageState extends State<Signup2Page> {
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
-                    child: Icon(Icons.person, size: 60, color: Colors.grey),
+                    child: Icon(Icons.timer, size: 60, color: Colors.grey),
                   ),
                 ),
               ),
               const SizedBox(height: 48),
               const Text(
-                'Select Gender',
+                'Set Your Daily Screen Time Limit',
                 style: TextStyle(
                   color: kPrimaryColor,
                   fontWeight: FontWeight.bold,
@@ -51,71 +49,25 @@ class _Signup2PageState extends State<Signup2Page> {
                 textAlign: TextAlign.left,
               ),
               const SizedBox(height: 24),
-              RadioListTile<Gender>(
-                title: const Text(
-                  'Male',
-                  style: TextStyle(
-                    color: kPrimaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
+              Text(
+                '${_screenTime.toStringAsFixed(1)} hours',
+                style: const TextStyle(
+                  color: kPrimaryColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
                 ),
-                value: Gender.male,
-                groupValue: _selectedGender,
-                activeColor: kPrimaryColor,
-                onChanged: (Gender? value) {
-                  setState(() {
-                    _selectedGender = value;
-                  });
-                },
+                textAlign: TextAlign.center,
               ),
-              RadioListTile<Gender>(
-                title: const Text(
-                  'Female',
-                  style: TextStyle(
-                    color: kPrimaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                value: Gender.female,
-                groupValue: _selectedGender,
+              Slider(
+                value: _screenTime,
+                min: 0.5,
+                max: 12.0,
+                divisions: 23,
+                label: '${_screenTime.toStringAsFixed(1)} h',
                 activeColor: kPrimaryColor,
-                onChanged: (Gender? value) {
+                onChanged: (value) {
                   setState(() {
-                    _selectedGender = value;
-                  });
-                },
-              ),
-              RadioListTile<Gender>(
-                title: const Text(
-                  'Other',
-                  style: TextStyle(
-                    color: kPrimaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                value: Gender.other,
-                groupValue: _selectedGender,
-                activeColor: kPrimaryColor,
-                onChanged: (Gender? value) {
-                  setState(() {
-                    _selectedGender = value;
-                  });
-                },
-              ),
-              RadioListTile<Gender>(
-                title: const Text(
-                  'Not to be disclosed',
-                  style: TextStyle(
-                    color: kPrimaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                value: Gender.undisclosed,
-                groupValue: _selectedGender,
-                activeColor: kPrimaryColor,
-                onChanged: (Gender? value) {
-                  setState(() {
-                    _selectedGender = value;
+                    _screenTime = value;
                   });
                 },
               ),
@@ -157,7 +109,7 @@ class _Signup2PageState extends State<Signup2Page> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const Signup3Page(),
+                              builder: (context) => const Signup4Page(),
                             ),
                           );
                         },

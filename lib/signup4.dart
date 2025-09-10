@@ -1,57 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'signup2.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
 
-class Signup1Page extends StatefulWidget {
-  const Signup1Page({Key? key}) : super(key: key);
+class Signup4Page extends StatefulWidget {
+  const Signup4Page({Key? key}) : super(key: key);
 
   @override
-  State<Signup1Page> createState() => _Signup1PageState();
+  State<Signup4Page> createState() => _Signup4PageState();
 }
 
-class _Signup1PageState extends State<Signup1Page> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _dobController = TextEditingController();
-  int? _age;
+class _Signup4PageState extends State<Signup4Page> {
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  String? _passwordError;
+  String? _confirmPasswordError;
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
-  void _pickDate() async {
-    DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: kPrimaryColor,
-              onPrimary: Colors.white,
-              onSurface: kPrimaryColor,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      _dobController.text = DateFormat('yyyy-MM-dd').format(picked);
-      setState(() {
-        _age = _calculateAge(picked);
-      });
-    }
+  bool _validatePassword(String password) {
+    final hasUpper = password.contains(RegExp(r'[A-Z]'));
+    final hasLower = password.contains(RegExp(r'[a-z]'));
+    final hasSpecial = password.contains(RegExp(r'[!@#\$&*~]'));
+    return hasUpper && hasLower && hasSpecial && password.length >= 8;
   }
 
-  int _calculateAge(DateTime dob) {
-    final today = DateTime.now();
-    int age = today.year - dob.year;
-    if (today.month < dob.month ||
-        (today.month == dob.month && today.day < dob.day)) {
-      age--;
-    }
-    return age;
+  void _onFinish() {
+    setState(() {
+      _passwordError = null;
+      _confirmPasswordError = null;
+      final password = _passwordController.text;
+      final confirm = _confirmPasswordController.text;
+      if (!_validatePassword(password)) {
+        _passwordError =
+            'Password must be 8+ chars, include upper, lower, special.';
+      }
+      if (password != confirm) {
+        _confirmPasswordError = 'Passwords do not match.';
+      }
+      if (_passwordError == null && _confirmPasswordError == null) {
+        // TODO: Handle successful finish
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Signup Complete!')));
+      }
+    });
   }
 
   @override
@@ -74,60 +68,70 @@ class _Signup1PageState extends State<Signup1Page> {
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
-                    child: Icon(Icons.person, size: 60, color: Colors.grey),
+                    child: Icon(Icons.lock, size: 60, color: Colors.grey),
                   ),
                 ),
               ),
               const SizedBox(height: 48),
-              // Email field
               TextField(
-                controller: _emailController,
+                controller: _passwordController,
+                obscureText: _obscurePassword,
                 style: const TextStyle(
                   color: kPrimaryColor,
                   fontWeight: FontWeight.bold,
                 ),
-                decoration: const InputDecoration(
-                  labelText: 'Email ID',
-                  labelStyle: TextStyle(
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  labelStyle: const TextStyle(
                     color: kPrimaryColor,
                     fontWeight: FontWeight.bold,
                   ),
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  errorText: _passwordError,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: kPrimaryColor,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
                 ),
-                keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 24),
-              // DOB field
               TextField(
-                controller: _dobController,
-                readOnly: true,
+                controller: _confirmPasswordController,
+                obscureText: _obscureConfirm,
                 style: const TextStyle(
                   color: kPrimaryColor,
                   fontWeight: FontWeight.bold,
                 ),
-                decoration: const InputDecoration(
-                  labelText: 'Date of Birth',
-                  labelStyle: TextStyle(
+                decoration: InputDecoration(
+                  labelText: 'Confirm Password',
+                  labelStyle: const TextStyle(
                     color: kPrimaryColor,
                     fontWeight: FontWeight.bold,
                   ),
-                  border: OutlineInputBorder(),
-                  suffixIcon: Icon(Icons.calendar_today, color: kPrimaryColor),
+                  border: const OutlineInputBorder(),
+                  errorText: _confirmPasswordError,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureConfirm ? Icons.visibility_off : Icons.visibility,
+                      color: kPrimaryColor,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureConfirm = !_obscureConfirm;
+                      });
+                    },
+                  ),
                 ),
-                onTap: _pickDate,
               ),
-              const SizedBox(height: 12),
-              // Age display below DOB
-              if (_age != null)
-                Text(
-                  '${_age!} years',
-                  style: const TextStyle(
-                    color: kPrimaryColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                  textAlign: TextAlign.left,
-                ),
               const Spacer(),
               Row(
                 children: [
@@ -162,16 +166,9 @@ class _Signup1PageState extends State<Signup1Page> {
                             fontSize: 18,
                           ),
                         ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const Signup2Page(),
-                            ),
-                          );
-                        },
+                        onPressed: _onFinish,
                         child: const Text(
-                          'Next',
+                          'Finish',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
