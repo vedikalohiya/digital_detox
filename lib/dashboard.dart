@@ -91,7 +91,7 @@ class DashboardPage extends StatelessWidget {
               icon: Icons.health_and_safety,
               label: 'Healthy Life Support',
               onTap: () {
-                // TODO: Navigate to Healthy Life Support
+                
               },
             ),
           ],
