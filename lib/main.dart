@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
+import 'login.dart'; // keep LoginPage as entry point
 
 void main() => runApp(const MyApp());
 
