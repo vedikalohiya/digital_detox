@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'signup1.dart';
+import 'signup1.dart'; // Next signup step
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
-const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
+const Color kBackgroundColor = Color(0xFFF5F5DC);
 
 class SignupPage extends StatelessWidget {
   const SignupPage({Key? key}) : super(key: key);
@@ -18,7 +18,6 @@ class SignupPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 48),
-              // Logo placeholder
               Center(
                 child: Container(
                   width: 100,
@@ -33,63 +32,37 @@ class SignupPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 48),
-              // Full Name field
               TextField(
-                style: const TextStyle(
-                  color: kPrimaryColor,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
                 decoration: const InputDecoration(
                   labelText: 'Full Name',
-                  labelStyle: TextStyle(
-                    color: kPrimaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  labelStyle: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
                   border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 24),
-              // Phone Number field
               TextField(
                 keyboardType: TextInputType.phone,
-                style: const TextStyle(
-                  color: kPrimaryColor,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
                 decoration: const InputDecoration(
                   labelText: 'Phone Number',
-                  labelStyle: TextStyle(
-                    color: kPrimaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  labelStyle: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
                   border: OutlineInputBorder(),
                 ),
               ),
               const Spacer(),
-              // Next button
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrimaryColor,
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
+                    textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Signup1Page(),
-                      ),
-                    );
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const Signup1Page()));
                   },
-                  child: const Text(
-                    'Next',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  child: const Text('Next', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 24),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'signup.dart'; // ✅ Import your SignupPage
+import 'signup.dart';
+import 'dashboard.dart'; // Dashboard page
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,7 +12,7 @@ class _LoginPageState extends State<LoginPage> {
   final email = TextEditingController();
   final pass = TextEditingController();
   final green = const Color(0xFF2E9D8A);
-  final bgColor = const Color(0xFFF5F5DC); // light beige background
+  final bgColor = const Color(0xFFF5F5DC);
 
   String? emailError;
   String? passError;
@@ -36,11 +37,9 @@ class _LoginPageState extends State<LoginPage> {
   void handleLogin() {
     validate();
     if (emailError == null && passError == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Login successful for ${email.text}!'),
-          backgroundColor: green,
-        ),
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardPage()),
       );
     }
   }
@@ -48,21 +47,14 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgColor, // light beige background
-      appBar: AppBar(
-        title: const Text("Digital Detox Login"),
-        backgroundColor: green,
-      ),
+      backgroundColor: bgColor,
+      appBar: AppBar(title: const Text("Digital Detox Login"), backgroundColor: green),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             const SizedBox(height: 20),
-            Text(
-              "Welcome Back!",
-              style: TextStyle(
-                  fontSize: 28, fontWeight: FontWeight.bold, color: green),
-            ),
+            Text("Welcome Back!", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: green)),
             const SizedBox(height: 20),
             TextField(
               controller: email,
@@ -88,19 +80,13 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 TextButton(
                   onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: const Text("Forgot Password!"),
-                        backgroundColor: green),
+                    SnackBar(content: const Text("Forgot Password!"), backgroundColor: green),
                   ),
                   child: Text("Forgot Password?", style: TextStyle(color: green)),
                 ),
-                // ✅ Navigate to SignupPage
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SignupPage()),
-                    );
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupPage()));
                   },
                   child: Text("Sign Up", style: TextStyle(color: green)),
                 ),
@@ -111,8 +97,7 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: handleLogin,
               style: ElevatedButton.styleFrom(
                 backgroundColor: green,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
               child: const Text("Login", style: TextStyle(color: Colors.white)),
             ),
