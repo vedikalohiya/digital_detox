@@ -1,15 +1,21 @@
-name: digital_detox
-description: "A new Flutter project."
-publish_to: 'none'
-version: 0.1.0
+name: detox_app
+description: A Detox application with login page
+publish_to: 'none' # remove if you want to publish
+version: 1.0.0+1
 
 environment:
-  sdk: ^3.9.0
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
   intl: ^0.19.0
+
+  # Add other dependencies here if needed later
+  # Example:
+  # firebase_auth: ^5.1.0
+  # http: ^1.2.2
+  # provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:
