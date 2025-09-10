@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'about_us.dart'; // import AboutUsPage
+import 'signup.dart'; // ✅ Import your SignupPage
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,7 +11,7 @@ class _LoginPageState extends State<LoginPage> {
   final email = TextEditingController();
   final pass = TextEditingController();
   final green = const Color(0xFF2E9D8A);
-  final bgColor = const Color(0xFFF5F5DC);
+  final bgColor = const Color(0xFFF5F5DC); // light beige background
 
   String? emailError;
   String? passError;
@@ -48,24 +48,10 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: bgColor, // light beige background
       appBar: AppBar(
         title: const Text("Digital Detox Login"),
         backgroundColor: green,
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AboutUsPage()),
-              );
-            },
-            child: const Text(
-              "About Us",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
-          )
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -101,25 +87,33 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 TextButton(
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: const Text("Forgot Password!"),
-                            backgroundColor: green)),
-                    child: Text("Forgot Password?", style: TextStyle(color: green))),
+                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: const Text("Forgot Password!"),
+                        backgroundColor: green),
+                  ),
+                  child: Text("Forgot Password?", style: TextStyle(color: green)),
+                ),
+                // ✅ Navigate to SignupPage
                 TextButton(
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: const Text("Sign Up!"), backgroundColor: green)),
-                    child: Text("Sign Up", style: TextStyle(color: green))),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SignupPage()),
+                    );
+                  },
+                  child: Text("Sign Up", style: TextStyle(color: green)),
+                ),
               ],
             ),
             const SizedBox(height: 15),
             ElevatedButton(
               onPressed: handleLogin,
               style: ElevatedButton.styleFrom(
-                  backgroundColor: green,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
+                backgroundColor: green,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+              ),
               child: const Text("Login", style: TextStyle(color: Colors.white)),
             ),
           ],
