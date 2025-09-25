@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dashboard.dart';
+import 'login.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
@@ -41,10 +41,10 @@ class _Signup4PageState extends State<Signup4Page> {
         _confirmPasswordError = 'Passwords do not match.';
       }
       if (_passwordError == null && _confirmPasswordError == null) {
-        // Navigate to DashboardPage
+        // Navigate to LoginPage after successful signup
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const DashboardPage()),
+          MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       }
     });
