@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'signup2.dart';
+import 'user_model.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
 
 class Signup1Page extends StatefulWidget {
-  const Signup1Page({Key? key}) : super(key: key);
+  final UserProfile userProfile;
+  
+  const Signup1Page({Key? key, required this.userProfile}) : super(key: key);
 
   @override
   State<Signup1Page> createState() => _Signup1PageState();
@@ -163,12 +166,23 @@ class _Signup1PageState extends State<Signup1Page> {
                           ),
                         ),
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const Signup2Page(),
-                            ),
-                          );
+                          if (_emailController.text.isNotEmpty && _dobController.text.isNotEmpty) {
+                            UserProfile updatedProfile = widget.userProfile.copyWith(
+                              email: _emailController.text,
+                              dateOfBirth: _dobController.text,
+                              age: _age ?? 0,
+                            );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => Signup2Page(userProfile: updatedProfile),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please fill all fields')),
+                            );
+                          }
                         },
                         child: const Text(
                           'Next',

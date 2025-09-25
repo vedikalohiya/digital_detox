@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'profile_page.dart';
+import 'user_model.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
@@ -36,6 +38,30 @@ class DashboardPage extends StatelessWidget {
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('My Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                // For demo purposes, create a sample user profile
+                UserProfile sampleProfile = UserProfile(
+                  fullName: 'John Doe',
+                  phoneNumber: '+1234567890',
+                  email: 'john.doe@example.com',
+                  dateOfBirth: '1995-01-15',
+                  age: 29,
+                  gender: 'male',
+                  screenTimeLimit: 3.5,
+                  password: 'password123',
+                );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfilePage(userProfile: sampleProfile),
+                  ),
+                );
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () => Navigator.pop(context), // Implement logout later
@@ -48,6 +74,26 @@ class DashboardPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            _DashboardButton(icon: Icons.person, label: 'My Profile', onTap: () {
+              // For demo purposes, create a sample user profile
+              UserProfile sampleProfile = UserProfile(
+                fullName: 'John Doe',
+                phoneNumber: '+1234567890',
+                email: 'john.doe@example.com',
+                dateOfBirth: '1995-01-15',
+                age: 29,
+                gender: 'male',
+                screenTimeLimit: 3.5,
+                password: 'password123',
+              );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfilePage(userProfile: sampleProfile),
+                ),
+              );
+            }),
+            const SizedBox(height: 24),
             _DashboardButton(icon: Icons.power_settings_new, label: 'Detox Mode', onTap: () {}),
             const SizedBox(height: 24),
             _DashboardButton(icon: Icons.emoji_events, label: 'Gamification & Motivation', onTap: () {}),

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'signup4.dart';
+import 'user_model.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
 
 class Signup3Page extends StatefulWidget {
-  const Signup3Page({Key? key}) : super(key: key);
+  final UserProfile userProfile;
+  
+  const Signup3Page({Key? key, required this.userProfile}) : super(key: key);
 
   @override
   State<Signup3Page> createState() => _Signup3PageState();
@@ -106,10 +109,13 @@ class _Signup3PageState extends State<Signup3Page> {
                           ),
                         ),
                         onPressed: () {
+                          UserProfile updatedProfile = widget.userProfile.copyWith(
+                            screenTimeLimit: _screenTime,
+                          );
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const Signup4Page(),
+                              builder: (context) => Signup4Page(userProfile: updatedProfile),
                             ),
                           );
                         },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'signup3.dart';
+import 'user_model.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
@@ -7,7 +8,9 @@ const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
 enum Gender { male, female, other, undisclosed }
 
 class Signup2Page extends StatefulWidget {
-  const Signup2Page({Key? key}) : super(key: key);
+  final UserProfile userProfile;
+  
+  const Signup2Page({Key? key, required this.userProfile}) : super(key: key);
 
   @override
   State<Signup2Page> createState() => _Signup2PageState();
@@ -154,12 +157,22 @@ class _Signup2PageState extends State<Signup2Page> {
                           ),
                         ),
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const Signup3Page(),
-                            ),
-                          );
+                          if (_selectedGender != null) {
+                            String genderString = _selectedGender.toString().split('.').last;
+                            UserProfile updatedProfile = widget.userProfile.copyWith(
+                              gender: genderString,
+                            );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => Signup3Page(userProfile: updatedProfile),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please select a gender')),
+                            );
+                          }
                         },
                         child: const Text(
                           'Next',

@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import 'signup1.dart'; // Next signup step
+import 'user_model.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
 
-class SignupPage extends StatelessWidget {
+class SignupPage extends StatefulWidget {
   const SignupPage({Key? key}) : super(key: key);
+
+  @override
+  State<SignupPage> createState() => _SignupPageState();
+}
+
+class _SignupPageState extends State<SignupPage> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +42,7 @@ class SignupPage extends StatelessWidget {
               ),
               const SizedBox(height: 48),
               TextField(
+                controller: _nameController,
                 style: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
                 decoration: const InputDecoration(
                   labelText: 'Full Name',
@@ -42,6 +52,7 @@ class SignupPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               TextField(
+                controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 style: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
                 decoration: const InputDecoration(
@@ -60,7 +71,28 @@ class SignupPage extends StatelessWidget {
                     textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const Signup1Page()));
+                    if (_nameController.text.isNotEmpty && _phoneController.text.isNotEmpty) {
+                      UserProfile userProfile = UserProfile(
+                        fullName: _nameController.text,
+                        phoneNumber: _phoneController.text,
+                        email: '',
+                        dateOfBirth: '',
+                        age: 0,
+                        gender: '',
+                        screenTimeLimit: 2.0,
+                        password: '',
+                      );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Signup1Page(userProfile: userProfile),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please fill all fields')),
+                      );
+                    }
                   },
                   child: const Text('Next', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),

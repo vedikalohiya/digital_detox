@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'login.dart';
+import 'user_model.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
 
 class Signup4Page extends StatefulWidget {
-  const Signup4Page({Key? key}) : super(key: key);
+  final UserProfile userProfile;
+  
+  const Signup4Page({Key? key, required this.userProfile}) : super(key: key);
 
   @override
   State<Signup4Page> createState() => _Signup4PageState();
@@ -41,6 +44,17 @@ class _Signup4PageState extends State<Signup4Page> {
         _confirmPasswordError = 'Passwords do not match.';
       }
       if (_passwordError == null && _confirmPasswordError == null) {
+        // Complete the user profile with password
+        UserProfile completedProfile = widget.userProfile.copyWith(
+          password: _passwordController.text,
+        );
+        
+        // Save the user profile (you can implement local storage later)
+        // For now, just show success and navigate to login
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account created successfully! Please login.')),
+        );
+        
         // Navigate to LoginPage after successful signup
         Navigator.pushReplacement(
           context,
