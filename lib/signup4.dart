@@ -8,7 +8,7 @@ const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
 class Signup4Page extends StatefulWidget {
   final UserProfile userProfile;
   
-  const Signup4Page({Key? key, required this.userProfile}) : super(key: key);
+  const Signup4Page({super.key, required this.userProfile});
 
   @override
   State<Signup4Page> createState() => _Signup4PageState();

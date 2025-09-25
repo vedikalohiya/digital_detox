@@ -8,7 +8,7 @@ const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
 class Signup3Page extends StatefulWidget {
   final UserProfile userProfile;
   
-  const Signup3Page({Key? key, required this.userProfile}) : super(key: key);
+  const Signup3Page({super.key, required this.userProfile});
 
   @override
   State<Signup3Page> createState() => _Signup3PageState();

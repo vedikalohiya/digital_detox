@@ -10,7 +10,7 @@ enum Gender { male, female, other, undisclosed }
 class Signup2Page extends StatefulWidget {
   final UserProfile userProfile;
   
-  const Signup2Page({Key? key, required this.userProfile}) : super(key: key);
+  const Signup2Page({super.key, required this.userProfile});
 
   @override
   State<Signup2Page> createState() => _Signup2PageState();

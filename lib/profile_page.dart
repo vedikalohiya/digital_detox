@@ -8,7 +8,7 @@ const Color kCardColor = Colors.white;
 class ProfilePage extends StatelessWidget {
   final UserProfile userProfile;
 
-  const ProfilePage({Key? key, required this.userProfile}) : super(key: key);
+  const ProfilePage({super.key, required this.userProfile});
 
   @override
   Widget build(BuildContext context) {
