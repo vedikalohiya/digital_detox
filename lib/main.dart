@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login.dart'; // Login page
+import 'landing_page.dart'; // start here
 
 void main() => runApp(const MyApp());
 
@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Digital Detox App',
-      home: LoginPage(), // Start with login page
+      home: LandingPage(), // ✅ Start with Landing first
     );
   }
 }
