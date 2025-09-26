@@ -1,4 +1,5 @@
-// User data model to store all signup information
+// lib/user_model.dart
+
 class UserProfile {
   final String fullName;
   final String phoneNumber;
@@ -48,7 +49,7 @@ class UserProfile {
     );
   }
 
-  // Create a copy with updated values
+  // Copy with updated values
   UserProfile copyWith({
     String? fullName,
     String? phoneNumber,

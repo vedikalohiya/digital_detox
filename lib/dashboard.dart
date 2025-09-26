@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'profile_page.dart';
 import 'user_model.dart';
+import 'About_us.dart'; // keep for drawer if needed
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
@@ -30,7 +31,10 @@ class DashboardPage extends StatelessWidget {
           children: [
             DrawerHeader(
               decoration: BoxDecoration(color: kPrimaryColor),
-              child: const Text('Menu', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Menu',
+                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.home),
@@ -42,7 +46,6 @@ class DashboardPage extends StatelessWidget {
               title: const Text('My Profile'),
               onTap: () {
                 Navigator.pop(context);
-                // For demo purposes, create a sample user profile
                 UserProfile sampleProfile = UserProfile(
                   fullName: 'John Doe',
                   phoneNumber: '+1234567890',
@@ -62,9 +65,20 @@ class DashboardPage extends StatelessWidget {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.info),
+              title: const Text('About Us'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AboutUsPage()),
+                );
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
-              onTap: () => Navigator.pop(context), // Implement logout later
+              onTap: () => Navigator.pop(context),
             ),
           ],
         ),
@@ -74,25 +88,28 @@ class DashboardPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _DashboardButton(icon: Icons.person, label: 'My Profile', onTap: () {
-              // For demo purposes, create a sample user profile
-              UserProfile sampleProfile = UserProfile(
-                fullName: 'John Doe',
-                phoneNumber: '+1234567890',
-                email: 'john.doe@example.com',
-                dateOfBirth: '1995-01-15',
-                age: 29,
-                gender: 'male',
-                screenTimeLimit: 3.5,
-                password: 'password123',
-              );
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ProfilePage(userProfile: sampleProfile),
-                ),
-              );
-            }),
+            _DashboardButton(
+              icon: Icons.person,
+              label: 'My Profile',
+              onTap: () {
+                UserProfile sampleProfile = UserProfile(
+                  fullName: 'John Doe',
+                  phoneNumber: '+1234567890',
+                  email: 'john.doe@example.com',
+                  dateOfBirth: '1995-01-15',
+                  age: 29,
+                  gender: 'male',
+                  screenTimeLimit: 3.5,
+                  password: 'password123',
+                );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfilePage(userProfile: sampleProfile),
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 24),
             _DashboardButton(icon: Icons.power_settings_new, label: 'Detox Mode', onTap: () {}),
             const SizedBox(height: 24),
@@ -122,7 +139,10 @@ class _DashboardButton extends StatelessWidget {
       height: 60,
       child: ElevatedButton.icon(
         icon: Icon(icon, color: Colors.white, size: 32),
-        label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+        label: Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: kPrimaryColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
