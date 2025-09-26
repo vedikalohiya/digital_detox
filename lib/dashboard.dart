@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'profile_page.dart';
 import 'user_model.dart';
-import 'About_us.dart'; // keep for drawer if needed
+import 'About_us.dart';
+import 'contact_us.dart'; // Add this import
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
@@ -15,7 +16,10 @@ class DashboardPage extends StatelessWidget {
       backgroundColor: kBackgroundColor,
       appBar: AppBar(
         backgroundColor: kPrimaryColor,
-        title: const Text('Digital Detox Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Digital Detox Dashboard',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         elevation: 0,
         leading: Builder(
@@ -31,9 +35,11 @@ class DashboardPage extends StatelessWidget {
           children: [
             DrawerHeader(
               decoration: BoxDecoration(color: kPrimaryColor),
-              child: const Text(
-                'Menu',
-                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              child: const Center(
+                child: Text(
+                  'Menu',
+                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             ListTile(
@@ -72,6 +78,17 @@ class DashboardPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const AboutUsPage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.contact_mail),
+              title: const Text('Contact Us'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ContactPage()),
                 );
               },
             ),
