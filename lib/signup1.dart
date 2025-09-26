@@ -8,7 +8,7 @@ const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
 
 class Signup1Page extends StatefulWidget {
   final UserProfile userProfile;
-  
+
   const Signup1Page({super.key, required this.userProfile});
 
   @override
@@ -19,6 +19,20 @@ class _Signup1PageState extends State<Signup1Page> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
   int? _age;
+
+  String? emailError;
+  String? dobError;
+
+  // ✅ Email validation
+  bool isValidEmail(String e) =>
+      RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$").hasMatch(e.trim());
+
+  // ✅ DOB validation: must be in past and at least 13 years
+  bool isValidDOB(DateTime dob) {
+    final today = DateTime.now();
+    int age = _calculateAge(dob);
+    return dob.isBefore(today) && age >= 13;
+  }
 
   void _pickDate() async {
     DateTime? picked = await showDatePicker(
@@ -39,10 +53,12 @@ class _Signup1PageState extends State<Signup1Page> {
         );
       },
     );
+
     if (picked != null) {
       _dobController.text = DateFormat('yyyy-MM-dd').format(picked);
       setState(() {
         _age = _calculateAge(picked);
+        dobError = isValidDOB(picked) ? null : "You must be at least 13 years old";
       });
     }
   }
@@ -55,6 +71,52 @@ class _Signup1PageState extends State<Signup1Page> {
       age--;
     }
     return age;
+  }
+
+  void validate() {
+    setState(() {
+      // Email validation
+      emailError = _emailController.text.trim().isEmpty
+          ? 'Email is required'
+          : (!isValidEmail(_emailController.text)
+              ? 'Enter a valid email'
+              : null);
+
+      // DOB validation
+      if (_dobController.text.trim().isEmpty) {
+        dobError = 'Date of birth is required';
+      }
+    });
+  }
+
+  void handleNext() {
+    validate();
+    if (emailError == null && dobError == null) {
+      UserProfile updatedProfile = widget.userProfile.copyWith(
+        email: _emailController.text.trim(),
+        dateOfBirth: _dobController.text.trim(),
+        age: _age ?? 0,
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Signup2Page(userProfile: updatedProfile),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fix errors before proceeding')),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Real-time validation listeners
+    _emailController.addListener(() {
+      if (emailError != null) validate();
+    });
   }
 
   @override
@@ -82,6 +144,7 @@ class _Signup1PageState extends State<Signup1Page> {
                 ),
               ),
               const SizedBox(height: 48),
+
               // Email field
               TextField(
                 controller: _emailController,
@@ -89,17 +152,19 @@ class _Signup1PageState extends State<Signup1Page> {
                   color: kPrimaryColor,
                   fontWeight: FontWeight.bold,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Email ID',
-                  labelStyle: TextStyle(
+                  labelStyle: const TextStyle(
                     color: kPrimaryColor,
                     fontWeight: FontWeight.bold,
                   ),
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  errorText: emailError,
                 ),
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 24),
+
               // DOB field
               TextField(
                 controller: _dobController,
@@ -108,19 +173,22 @@ class _Signup1PageState extends State<Signup1Page> {
                   color: kPrimaryColor,
                   fontWeight: FontWeight.bold,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Date of Birth',
-                  labelStyle: TextStyle(
+                  labelStyle: const TextStyle(
                     color: kPrimaryColor,
                     fontWeight: FontWeight.bold,
                   ),
-                  border: OutlineInputBorder(),
-                  suffixIcon: Icon(Icons.calendar_today, color: kPrimaryColor),
+                  border: const OutlineInputBorder(),
+                  suffixIcon:
+                      const Icon(Icons.calendar_today, color: kPrimaryColor),
+                  errorText: dobError,
                 ),
                 onTap: _pickDate,
               ),
               const SizedBox(height: 12),
-              // Age display below DOB
+
+              // Age display
               if (_age != null)
                 Text(
                   '${_age!} years',
@@ -131,7 +199,10 @@ class _Signup1PageState extends State<Signup1Page> {
                   ),
                   textAlign: TextAlign.left,
                 ),
+
               const Spacer(),
+
+              // Buttons
               Row(
                 children: [
                   Expanded(
@@ -139,7 +210,7 @@ class _Signup1PageState extends State<Signup1Page> {
                       height: 48,
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: kPrimaryColor, width: 2),
+                          side: const BorderSide(color: kPrimaryColor, width: 2),
                           foregroundColor: kPrimaryColor,
                           textStyle: const TextStyle(
                             fontWeight: FontWeight.bold,
@@ -165,25 +236,7 @@ class _Signup1PageState extends State<Signup1Page> {
                             fontSize: 18,
                           ),
                         ),
-                        onPressed: () {
-                          if (_emailController.text.isNotEmpty && _dobController.text.isNotEmpty) {
-                            UserProfile updatedProfile = widget.userProfile.copyWith(
-                              email: _emailController.text,
-                              dateOfBirth: _dobController.text,
-                              age: _age ?? 0,
-                            );
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => Signup2Page(userProfile: updatedProfile),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please fill all fields')),
-                            );
-                          }
-                        },
+                        onPressed: handleNext,
                         child: const Text(
                           'Next',
                           style: TextStyle(fontWeight: FontWeight.bold),

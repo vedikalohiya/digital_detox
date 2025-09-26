@@ -16,6 +16,72 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
+  String? nameError;
+  String? phoneError;
+
+  // ✅ Validations
+  bool isValidName(String name) =>
+      RegExp(r"^[A-Za-z]+(?: [A-Za-z]+)+$").hasMatch(name.trim());
+
+  bool isValidPhone(String phone) =>
+      RegExp(r'^[0-9]{10}$').hasMatch(phone.trim());
+
+  void validate() {
+    setState(() {
+      // Full Name validation
+      nameError = _nameController.text.trim().isEmpty
+          ? 'Full name is required'
+          : (!isValidName(_nameController.text)
+              ? 'Enter first and last name (alphabets only)'
+              : null);
+
+      // Phone validation
+      phoneError = _phoneController.text.trim().isEmpty
+          ? 'Phone number is required'
+          : (!isValidPhone(_phoneController.text)
+              ? 'Enter a valid 10-digit number'
+              : null);
+    });
+  }
+
+  void handleNext() {
+    validate();
+    if (nameError == null && phoneError == null) {
+      UserProfile userProfile = UserProfile(
+        fullName: _nameController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+        email: '',
+        dateOfBirth: '',
+        age: 0,
+        gender: '',
+        screenTimeLimit: 2.0,
+        password: '',
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Signup1Page(userProfile: userProfile),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fix errors before proceeding')),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Revalidate while typing
+    _nameController.addListener(() {
+      if (nameError != null) validate();
+    });
+    _phoneController.addListener(() {
+      if (phoneError != null) validate();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,60 +107,51 @@ class _SignupPageState extends State<SignupPage> {
                 ),
               ),
               const SizedBox(height: 48),
+
+              // Name field
               TextField(
                 controller: _nameController,
-                style: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
-                decoration: const InputDecoration(
+                style: const TextStyle(
+                    color: kPrimaryColor, fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
                   labelText: 'Full Name',
-                  labelStyle: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
-                  border: OutlineInputBorder(),
+                  labelStyle: const TextStyle(
+                      color: kPrimaryColor, fontWeight: FontWeight.bold),
+                  border: const OutlineInputBorder(),
+                  errorText: nameError,
                 ),
               ),
               const SizedBox(height: 24),
+
+              // Phone field
               TextField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                style: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
-                decoration: const InputDecoration(
+                style: const TextStyle(
+                    color: kPrimaryColor, fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
                   labelText: 'Phone Number',
-                  labelStyle: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
-                  border: OutlineInputBorder(),
+                  labelStyle: const TextStyle(
+                      color: kPrimaryColor, fontWeight: FontWeight.bold),
+                  border: const OutlineInputBorder(),
+                  errorText: phoneError,
                 ),
               ),
               const Spacer(),
+
+              // Next Button
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrimaryColor,
-                    textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    textStyle: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 18),
                   ),
-                  onPressed: () {
-                    if (_nameController.text.isNotEmpty && _phoneController.text.isNotEmpty) {
-                      UserProfile userProfile = UserProfile(
-                        fullName: _nameController.text,
-                        phoneNumber: _phoneController.text,
-                        email: '',
-                        dateOfBirth: '',
-                        age: 0,
-                        gender: '',
-                        screenTimeLimit: 2.0,
-                        password: '',
-                      );
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Signup1Page(userProfile: userProfile),
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please fill all fields')),
-                      );
-                    }
-                  },
-                  child: const Text('Next', style: TextStyle(fontWeight: FontWeight.bold)),
+                  onPressed: handleNext,
+                  child: const Text('Next',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 24),

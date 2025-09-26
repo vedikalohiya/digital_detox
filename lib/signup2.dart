@@ -3,13 +3,13 @@ import 'signup3.dart';
 import 'user_model.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
-const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
+const Color kBackgroundColor = Color(0xFFF5F5DC);
 
 enum Gender { male, female, other, undisclosed }
 
 class Signup2Page extends StatefulWidget {
   final UserProfile userProfile;
-  
+
   const Signup2Page({super.key, required this.userProfile});
 
   @override
@@ -18,6 +18,13 @@ class Signup2Page extends StatefulWidget {
 
 class _Signup2PageState extends State<Signup2Page> {
   Gender? _selectedGender;
+  String? _errorText; // For real-time error message
+
+  void _validate() {
+    setState(() {
+      _errorText = _selectedGender == null ? "Please select a gender" : null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +51,8 @@ class _Signup2PageState extends State<Signup2Page> {
                 ),
               ),
               const SizedBox(height: 48),
+
+              // Title
               const Text(
                 'Select Gender',
                 style: TextStyle(
@@ -51,78 +60,47 @@ class _Signup2PageState extends State<Signup2Page> {
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
-                textAlign: TextAlign.left,
               ),
+
+              // Real-time error display
+              if (_errorText != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    _errorText!,
+                    style: const TextStyle(color: Colors.red, fontSize: 14),
+                  ),
+                ),
+
               const SizedBox(height: 24),
-              RadioListTile<Gender>(
-                title: const Text(
-                  'Male',
-                  style: TextStyle(
-                    color: kPrimaryColor,
-                    fontWeight: FontWeight.bold,
+
+              // Gender Options
+              ...Gender.values.map((gender) {
+                String label = gender.toString().split('.').last[0].toUpperCase() +
+                    gender.toString().split('.').last.substring(1);
+                return RadioListTile<Gender>(
+                  title: Text(
+                    label,
+                    style: const TextStyle(
+                      color: kPrimaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                value: Gender.male,
-                groupValue: _selectedGender,
-                activeColor: kPrimaryColor,
-                onChanged: (Gender? value) {
-                  setState(() {
-                    _selectedGender = value;
-                  });
-                },
-              ),
-              RadioListTile<Gender>(
-                title: const Text(
-                  'Female',
-                  style: TextStyle(
-                    color: kPrimaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                value: Gender.female,
-                groupValue: _selectedGender,
-                activeColor: kPrimaryColor,
-                onChanged: (Gender? value) {
-                  setState(() {
-                    _selectedGender = value;
-                  });
-                },
-              ),
-              RadioListTile<Gender>(
-                title: const Text(
-                  'Other',
-                  style: TextStyle(
-                    color: kPrimaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                value: Gender.other,
-                groupValue: _selectedGender,
-                activeColor: kPrimaryColor,
-                onChanged: (Gender? value) {
-                  setState(() {
-                    _selectedGender = value;
-                  });
-                },
-              ),
-              RadioListTile<Gender>(
-                title: const Text(
-                  'Not to be disclosed',
-                  style: TextStyle(
-                    color: kPrimaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                value: Gender.undisclosed,
-                groupValue: _selectedGender,
-                activeColor: kPrimaryColor,
-                onChanged: (Gender? value) {
-                  setState(() {
-                    _selectedGender = value;
-                  });
-                },
-              ),
+                  value: gender,
+                  groupValue: _selectedGender,
+                  activeColor: kPrimaryColor,
+                  onChanged: (Gender? value) {
+                    setState(() {
+                      _selectedGender = value;
+                    });
+                    _validate(); // Re-validate instantly
+                  },
+                );
+              }).toList(),
+
               const Spacer(),
+
+              // Buttons
               Row(
                 children: [
                   Expanded(
@@ -130,16 +108,14 @@ class _Signup2PageState extends State<Signup2Page> {
                       height: 48,
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: kPrimaryColor, width: 2),
+                          side: const BorderSide(color: kPrimaryColor, width: 2),
                           foregroundColor: kPrimaryColor,
                           textStyle: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
                         ),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
+                        onPressed: () => Navigator.of(context).pop(),
                         child: const Text('Back'),
                       ),
                     ),
@@ -156,28 +132,20 @@ class _Signup2PageState extends State<Signup2Page> {
                             fontSize: 18,
                           ),
                         ),
-                        onPressed: () {
-                          if (_selectedGender != null) {
-                            String genderString = _selectedGender.toString().split('.').last;
-                            UserProfile updatedProfile = widget.userProfile.copyWith(
-                              gender: genderString,
-                            );
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => Signup3Page(userProfile: updatedProfile),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please select a gender')),
-                            );
-                          }
-                        },
-                        child: const Text(
-                          'Next',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                        onPressed: _selectedGender == null
+                            ? null // Disabled until valid
+                            : () {
+                                UserProfile updatedProfile = widget.userProfile.copyWith(
+                                  gender: _selectedGender.toString().split('.').last,
+                                );
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Signup3Page(userProfile: updatedProfile),
+                                  ),
+                                );
+                              },
+                        child: const Text('Next'),
                       ),
                     ),
                   ),

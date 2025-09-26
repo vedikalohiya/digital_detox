@@ -17,19 +17,27 @@ class _LoginPageState extends State<LoginPage> {
   String? emailError;
   String? passError;
 
-  bool isValidEmail(String e) => RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(e);
-  bool isValidPass(String p) =>
-      RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{6,}$').hasMatch(p);
+  // Email validation (RFC 5322 simplified)
+  bool isValidEmail(String e) =>
+      RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$").hasMatch(e.trim());
+
+  // Password validation (8+ chars, upper, lower, digit, special)
+  bool isValidPass(String p) => RegExp(
+          r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])(?!.*\s).{8,}$')
+      .hasMatch(p);
 
   void validate() {
     setState(() {
-      emailError = email.text.isEmpty
-          ? 'Email required'
-          : (!isValidEmail(email.text) ? 'Enter valid email' : null);
+      // Email
+      emailError = email.text.trim().isEmpty
+          ? 'Email is required'
+          : (!isValidEmail(email.text) ? 'Enter a valid email (e.g. abc@gmail.com)' : null);
+
+      // Password
       passError = pass.text.isEmpty
-          ? 'Password required'
+          ? 'Password is required'
           : (!isValidPass(pass.text)
-              ? 'Min 6 chars, 1 upper, 1 lower, 1 special'
+              ? 'Min 8 chars, 1 upper, 1 lower, 1 digit, 1 special, no spaces'
               : null);
     });
   }
@@ -45,19 +53,39 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Live validation
+    email.addListener(() {
+      if (emailError != null) validate();
+    });
+    pass.addListener(() {
+      if (passError != null) validate();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(title: const Text("Digital Detox Login"), backgroundColor: green),
+      appBar: AppBar(
+          title: const Text("Digital Detox Login"), backgroundColor: green),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             const SizedBox(height: 20),
-            Text("Welcome Back!", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: green)),
+            Text("Welcome Back!",
+                style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: green)),
             const SizedBox(height: 20),
+
+            // Email field
             TextField(
               controller: email,
+              keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
                   labelText: "Email",
                   prefixIcon: Icon(Icons.email, color: green),
@@ -65,6 +93,8 @@ class _LoginPageState extends State<LoginPage> {
                   border: const OutlineInputBorder()),
             ),
             const SizedBox(height: 15),
+
+            // Password field
             TextField(
               controller: pass,
               obscureText: true,
@@ -75,31 +105,38 @@ class _LoginPageState extends State<LoginPage> {
                   border: const OutlineInputBorder()),
             ),
             const SizedBox(height: 15),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 TextButton(
                   onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: const Text("Forgot Password!"), backgroundColor: green),
+                    SnackBar(
+                        content: const Text("Forgot Password!"),
+                        backgroundColor: green),
                   ),
                   child: Text("Forgot Password?", style: TextStyle(color: green)),
                 ),
                 TextButton(
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupPage()));
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const SignupPage()));
                   },
                   child: Text("Sign Up", style: TextStyle(color: green)),
                 ),
               ],
             ),
             const SizedBox(height: 15),
+
             ElevatedButton(
               onPressed: handleLogin,
               style: ElevatedButton.styleFrom(
                 backgroundColor: green,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
-              child: const Text("Login", style: TextStyle(color: Colors.white)),
+              child:
+                  const Text("Login", style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

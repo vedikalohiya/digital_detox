@@ -3,11 +3,11 @@ import 'signup4.dart';
 import 'user_model.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
-const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
+const Color kBackgroundColor = Color(0xFFF5F5DC);
 
 class Signup3Page extends StatefulWidget {
   final UserProfile userProfile;
-  
+
   const Signup3Page({super.key, required this.userProfile});
 
   @override
@@ -15,7 +15,26 @@ class Signup3Page extends StatefulWidget {
 }
 
 class _Signup3PageState extends State<Signup3Page> {
-  double _screenTime = 2.0; // default 2 hours
+  double _screenTime = 2.0; // Default value
+  String? _errorText;
+
+  void _validate(double value) {
+    setState(() {
+      if (value < 0.5) {
+        _errorText = "Screen time must be at least 0.5 hours";
+      } else if (value > 12.0) {
+        _errorText = "Screen time cannot exceed 12 hours";
+      } else {
+        _errorText = null; // Valid
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _validate(_screenTime); // Initial validation
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +61,8 @@ class _Signup3PageState extends State<Signup3Page> {
                 ),
               ),
               const SizedBox(height: 48),
+
+              // Title
               const Text(
                 'Set Your Daily Screen Time Limit',
                 style: TextStyle(
@@ -49,9 +70,11 @@ class _Signup3PageState extends State<Signup3Page> {
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
-                textAlign: TextAlign.left,
               ),
+
               const SizedBox(height: 24),
+
+              // Current Value
               Text(
                 '${_screenTime.toStringAsFixed(1)} hours',
                 style: const TextStyle(
@@ -61,6 +84,19 @@ class _Signup3PageState extends State<Signup3Page> {
                 ),
                 textAlign: TextAlign.center,
               ),
+
+              // Error Message
+              if (_errorText != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    _errorText!,
+                    style: const TextStyle(color: Colors.red, fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+              // Slider
               Slider(
                 value: _screenTime,
                 min: 0.5,
@@ -72,9 +108,13 @@ class _Signup3PageState extends State<Signup3Page> {
                   setState(() {
                     _screenTime = value;
                   });
+                  _validate(value); // Real-time validation
                 },
               ),
+
               const Spacer(),
+
+              // Buttons
               Row(
                 children: [
                   Expanded(
@@ -82,16 +122,14 @@ class _Signup3PageState extends State<Signup3Page> {
                       height: 48,
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: kPrimaryColor, width: 2),
+                          side: const BorderSide(color: kPrimaryColor, width: 2),
                           foregroundColor: kPrimaryColor,
                           textStyle: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
                         ),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
+                        onPressed: () => Navigator.of(context).pop(),
                         child: const Text('Back'),
                       ),
                     ),
@@ -108,21 +146,21 @@ class _Signup3PageState extends State<Signup3Page> {
                             fontSize: 18,
                           ),
                         ),
-                        onPressed: () {
-                          UserProfile updatedProfile = widget.userProfile.copyWith(
-                            screenTimeLimit: _screenTime,
-                          );
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => Signup4Page(userProfile: updatedProfile),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'Next',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                        onPressed: _errorText != null
+                            ? null // Disabled if invalid
+                            : () {
+                                UserProfile updatedProfile = widget.userProfile.copyWith(
+                                  screenTimeLimit: _screenTime,
+                                );
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        Signup4Page(userProfile: updatedProfile),
+                                  ),
+                                );
+                              },
+                        child: const Text('Next'),
                       ),
                     ),
                   ),
