@@ -27,7 +27,18 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+# Generated plugin registrant
+.flutter-plugins
 .flutter-plugins-dependencies
+
+# Firebase configuration (contains sensitive keys)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+# Environment variables
+.env
+.env.local
+.env.production
 .pub-cache/
 .pub/
 /build/
