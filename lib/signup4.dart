@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login.dart';
 import 'user_model.dart';
 
@@ -7,7 +9,7 @@ const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
 
 class Signup4Page extends StatefulWidget {
   final UserProfile userProfile;
-  
+
   const Signup4Page({super.key, required this.userProfile});
 
   @override
@@ -30,7 +32,7 @@ class _Signup4PageState extends State<Signup4Page> {
     return hasUpper && hasLower && hasSpecial && password.length >= 8;
   }
 
-  void _onFinish() {
+  Future<void> _onFinish() async {
     setState(() {
       _passwordError = null;
       _confirmPasswordError = null;
@@ -43,25 +45,96 @@ class _Signup4PageState extends State<Signup4Page> {
       if (password != confirm) {
         _confirmPasswordError = 'Passwords do not match.';
       }
-      if (_passwordError == null && _confirmPasswordError == null) {
-        // Complete the user profile with password
-        UserProfile completedProfile = widget.userProfile.copyWith(
-          password: _passwordController.text,
-        );
-        
-        // Save the user profile (you can implement local storage later)
-        // For now, just show success and navigate to login
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created successfully! Please login.')),
-        );
-        
-        // Navigate to LoginPage after successful signup
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
-      }
     });
+
+    if (_passwordError == null && _confirmPasswordError == null) {
+      try {
+        // Show loading dialog
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) =>
+              const Center(child: CircularProgressIndicator()),
+        );
+
+        // Create user account with Firebase Auth
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: widget.userProfile.email,
+              password: _passwordController.text,
+            );
+
+        // Save additional user data to Firestore
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
+              'fullName': widget.userProfile.fullName,
+              'phoneNumber': widget.userProfile.phoneNumber,
+              'email': widget.userProfile.email,
+              'dateOfBirth': widget.userProfile.dateOfBirth,
+              'age': widget.userProfile.age,
+              'gender': widget.userProfile.gender,
+              'screenTimeLimit': widget.userProfile.screenTimeLimit,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+
+        // Hide loading dialog
+        if (mounted) Navigator.of(context).pop();
+
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account created successfully! Please login.'),
+              backgroundColor: kPrimaryColor,
+            ),
+          );
+
+          // Navigate to LoginPage after successful signup
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        // Hide loading dialog
+        if (mounted) Navigator.of(context).pop();
+
+        String errorMessage;
+        switch (e.code) {
+          case 'weak-password':
+            errorMessage = 'The password provided is too weak.';
+            break;
+          case 'email-already-in-use':
+            errorMessage = 'An account already exists for that email.';
+            break;
+          case 'invalid-email':
+            errorMessage = 'The email address is not valid.';
+            break;
+          default:
+            errorMessage = 'An error occurred during signup. Please try again.';
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+          );
+        }
+      } catch (e) {
+        // Hide loading dialog
+        if (mounted) Navigator.of(context).pop();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('An unexpected error occurred. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   @override

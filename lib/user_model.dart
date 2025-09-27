@@ -48,6 +48,34 @@ class UserProfile {
     );
   }
 
+  // Create from Firestore document (excludes password for security)
+  factory UserProfile.fromFirestore(Map<String, dynamic> data, String email) {
+    return UserProfile(
+      fullName: data['fullName'] ?? '',
+      phoneNumber: data['phoneNumber'] ?? '',
+      email: email,
+      dateOfBirth: data['dateOfBirth'] ?? '',
+      age: data['age'] ?? 0,
+      gender: data['gender'] ?? '',
+      screenTimeLimit: (data['screenTimeLimit'] ?? 2.0).toDouble(),
+      password: '', // Don't store password in model for security
+    );
+  }
+
+  // Convert to Firestore format (excludes password for security)
+  Map<String, dynamic> toFirestore() {
+    return {
+      'fullName': fullName,
+      'phoneNumber': phoneNumber,
+      'email': email,
+      'dateOfBirth': dateOfBirth,
+      'age': age,
+      'gender': gender,
+      'screenTimeLimit': screenTimeLimit,
+      // Don't include password in Firestore
+    };
+  }
+
   // Create a copy with updated values
   UserProfile copyWith({
     String? fullName,
