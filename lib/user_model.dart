@@ -1,4 +1,5 @@
-// User data model to store all signup information
+// lib/user_model.dart
+
 class UserProfile {
   final String fullName;
   final String phoneNumber;

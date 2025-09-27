@@ -20,16 +20,64 @@ class _Signup4PageState extends State<Signup4Page> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+
   String? _passwordError;
   String? _confirmPasswordError;
+
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
 
+  bool _isPasswordValid = false;
+  bool _isConfirmValid = false;
+
+  // Password validation rules
   bool _validatePassword(String password) {
     final hasUpper = password.contains(RegExp(r'[A-Z]'));
     final hasLower = password.contains(RegExp(r'[a-z]'));
+    final hasDigit = password.contains(RegExp(r'[0-9]'));
     final hasSpecial = password.contains(RegExp(r'[!@#\$&*~]'));
-    return hasUpper && hasLower && hasSpecial && password.length >= 8;
+
+    // Block email-like passwords (e.g., test@gmail.com)
+    final looksLikeEmail = password.contains('@') && password.contains('.');
+
+    return hasUpper &&
+        hasLower &&
+        hasDigit &&
+        hasSpecial &&
+        password.length >= 8 &&
+        !looksLikeEmail;
+  }
+
+  // Real-time password check
+  void _onPasswordChanged(String value) {
+    setState(() {
+      if (_validatePassword(value)) {
+        _passwordError = null;
+        _isPasswordValid = true;
+      } else {
+        _passwordError =
+            'Min 8 chars, must include upper, lower, digit & special (!@#\$&*~), not an email.';
+        _isPasswordValid = false;
+      }
+      // Also re-check confirm password whenever password changes
+      _onConfirmChanged(_confirmPasswordController.text);
+    });
+  }
+
+  // Real-time confirm password check
+  void _onConfirmChanged(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _confirmPasswordError = null;
+        _isConfirmValid = false;
+      } else if (value != _passwordController.text) {
+        _confirmPasswordError = 'Passwords do not match';
+        _isConfirmValid = false;
+      } else {
+        _confirmPasswordError = null;
+        _isConfirmValid = true;
+      }
+    });
   }
 
   Future<void> _onFinish() async {
@@ -40,7 +88,7 @@ class _Signup4PageState extends State<Signup4Page> {
       final confirm = _confirmPasswordController.text;
       if (!_validatePassword(password)) {
         _passwordError =
-            'Password must be 8+ chars, include upper, lower, special.';
+            'Password must be 8+ chars, include upper, lower, digit, special.';
       }
       if (password != confirm) {
         _confirmPasswordError = 'Passwords do not match.';
@@ -162,6 +210,8 @@ class _Signup4PageState extends State<Signup4Page> {
                 ),
               ),
               const SizedBox(height: 48),
+
+              // Password Field
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
@@ -169,6 +219,7 @@ class _Signup4PageState extends State<Signup4Page> {
                   color: kPrimaryColor,
                   fontWeight: FontWeight.bold,
                 ),
+                onChanged: _onPasswordChanged,
                 decoration: InputDecoration(
                   labelText: 'Password',
                   labelStyle: const TextStyle(
@@ -192,7 +243,10 @@ class _Signup4PageState extends State<Signup4Page> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 24),
+
+              // Confirm Password Field
               TextField(
                 controller: _confirmPasswordController,
                 obscureText: _obscureConfirm,
@@ -200,6 +254,7 @@ class _Signup4PageState extends State<Signup4Page> {
                   color: kPrimaryColor,
                   fontWeight: FontWeight.bold,
                 ),
+                onChanged: _onConfirmChanged,
                 decoration: InputDecoration(
                   labelText: 'Confirm Password',
                   labelStyle: const TextStyle(
@@ -221,7 +276,10 @@ class _Signup4PageState extends State<Signup4Page> {
                   ),
                 ),
               ),
+
               const Spacer(),
+
+              // Buttons
               Row(
                 children: [
                   Expanded(
@@ -229,7 +287,10 @@ class _Signup4PageState extends State<Signup4Page> {
                       height: 48,
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: kPrimaryColor, width: 2),
+                          side: const BorderSide(
+                            color: kPrimaryColor,
+                            width: 2,
+                          ),
                           foregroundColor: kPrimaryColor,
                           textStyle: const TextStyle(
                             fontWeight: FontWeight.bold,
@@ -255,16 +316,16 @@ class _Signup4PageState extends State<Signup4Page> {
                             fontSize: 18,
                           ),
                         ),
-                        onPressed: _onFinish,
-                        child: const Text(
-                          'Finish',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                        onPressed: (_isPasswordValid && _isConfirmValid)
+                            ? _onFinish
+                            : null,
+                        child: const Text('Finish'),
                       ),
                     ),
                   ),
                 ],
               ),
+
               const SizedBox(height: 24),
             ],
           ),
