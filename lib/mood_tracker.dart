@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class MoodTrackerPage extends StatefulWidget {
@@ -9,7 +10,8 @@ class MoodTrackerPage extends StatefulWidget {
 }
 
 class _MoodTrackerPageState extends State<MoodTrackerPage> {
-  final List<Map<String, String>> _moods = [];
+  final CollectionReference _moodCollection =
+      FirebaseFirestore.instance.collection('moods');
 
   final moods = [
     {"emoji": "😃", "label": "Happy"},
@@ -23,25 +25,31 @@ class _MoodTrackerPageState extends State<MoodTrackerPage> {
     final now = DateTime.now();
     final formatted = DateFormat('yyyy-MM-dd – hh:mm a').format(now);
 
-    setState(() {
-      _moods.insert(0, {"mood": mood, "time": formatted});
+    _moodCollection.add({
+      'mood': mood,
+      'time': formatted,
+      'timestamp': now,
     });
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text("Mood '$mood' logged ✅")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Mood '$mood' logged ✅"),
+        backgroundColor: const Color(0xFF2E9D8A),
+        duration: const Duration(seconds: 1),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           "Mood Tracker",
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF2E9D8A),
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(
         children: [
@@ -59,10 +67,7 @@ class _MoodTrackerPageState extends State<MoodTrackerPage> {
                     const SizedBox(height: 5),
                     Text(
                       m["label"]!,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black54,
-                      ),
+                      style: const TextStyle(fontSize: 14, color: Colors.black54),
                     ),
                   ],
                 ),
@@ -71,39 +76,64 @@ class _MoodTrackerPageState extends State<MoodTrackerPage> {
           ),
           const SizedBox(height: 20),
           Expanded(
-            child: _moods.isEmpty
-                ? const Center(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _moodCollection
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Text("Something went wrong!"),
+                  );
+                }
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final docs = snapshot.data!.docs;
+
+                if (docs.isEmpty) {
+                  return const Center(
                     child: Text(
                       "No moods logged yet. Tap an emoji to track! 📝",
                       style: TextStyle(color: Colors.grey),
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: _moods.length,
-                    itemBuilder: (_, i) => Card(
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: docs.length,
+                  itemBuilder: (_, i) {
+                    final data = docs[i].data()! as Map<String, dynamic>;
+                    final emoji = moods.firstWhere(
+                      (m) => m["label"] == data['mood'],
+                      orElse: () => {"emoji": "🙂"},
+                    )["emoji"];
+                    return Card(
                       margin: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 6,
                       ),
                       child: ListTile(
                         leading: Text(
-                          moods.firstWhere(
-                                (m) => m["label"] == _moods[i]["mood"],
-                              )["emoji"] ??
-                              "🙂",
+                          emoji!,
                           style: const TextStyle(fontSize: 28),
                         ),
-                        title: Text(_moods[i]["mood"]!),
+                        title: Text(data['mood']),
                         subtitle: Text(
-                          _moods[i]["time"]!,
+                          data['time'],
                           style: const TextStyle(
                             color: Colors.grey,
                             fontSize: 12,
                           ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
