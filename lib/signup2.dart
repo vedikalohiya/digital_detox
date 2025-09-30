@@ -96,7 +96,7 @@ class _Signup2PageState extends State<Signup2Page> {
                     _validate(); // Re-validate instantly
                   },
                 );
-              }).toList(),
+              }),
 
               const Spacer(),
 

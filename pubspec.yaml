@@ -16,6 +16,10 @@ dependencies:
   firebase_core: ^2.27.0
   firebase_auth: ^4.17.8
   cloud_firestore: ^4.15.8
+  # Local database for backup storage
+  sqflite: ^2.3.0
+  path: ^1.8.0
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

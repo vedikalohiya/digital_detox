@@ -1,4 +1,4 @@
-package com.package.digitaldetox
+package com.digitaldetox.app
 
 import io.flutter.embedding.android.FlutterActivity
 

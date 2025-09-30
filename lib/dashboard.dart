@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'profile_page.dart';
-import 'user_model.dart';
+import 'profile_page_new.dart';
 import 'About_us.dart';
-import 'contact_us.dart'; // Add this import
+import 'contact_us.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
@@ -38,7 +37,11 @@ class DashboardPage extends StatelessWidget {
               child: const Center(
                 child: Text(
                   'Menu',
-                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -52,21 +55,9 @@ class DashboardPage extends StatelessWidget {
               title: const Text('My Profile'),
               onTap: () {
                 Navigator.pop(context);
-                UserProfile sampleProfile = UserProfile(
-                  fullName: 'John Doe',
-                  phoneNumber: '+1234567890',
-                  email: 'john.doe@example.com',
-                  dateOfBirth: '1995-01-15',
-                  age: 29,
-                  gender: 'male',
-                  screenTimeLimit: 3.5,
-                  password: 'password123',
-                );
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => ProfilePage(userProfile: sampleProfile),
-                  ),
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
                 );
               },
             ),
@@ -109,32 +100,36 @@ class DashboardPage extends StatelessWidget {
               icon: Icons.person,
               label: 'My Profile',
               onTap: () {
-                UserProfile sampleProfile = UserProfile(
-                  fullName: 'John Doe',
-                  phoneNumber: '+1234567890',
-                  email: 'john.doe@example.com',
-                  dateOfBirth: '1995-01-15',
-                  age: 29,
-                  gender: 'male',
-                  screenTimeLimit: 3.5,
-                  password: 'password123',
-                );
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => ProfilePage(userProfile: sampleProfile),
-                  ),
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
                 );
               },
             ),
             const SizedBox(height: 24),
-            _DashboardButton(icon: Icons.power_settings_new, label: 'Detox Mode', onTap: () {}),
+            _DashboardButton(
+              icon: Icons.power_settings_new,
+              label: 'Detox Mode',
+              onTap: () {},
+            ),
             const SizedBox(height: 24),
-            _DashboardButton(icon: Icons.emoji_events, label: 'Gamification & Motivation', onTap: () {}),
+            _DashboardButton(
+              icon: Icons.emoji_events,
+              label: 'Gamification & Motivation',
+              onTap: () {},
+            ),
             const SizedBox(height: 24),
-            _DashboardButton(icon: Icons.psychology, label: 'Mental Health Tool', onTap: () {}),
+            _DashboardButton(
+              icon: Icons.psychology,
+              label: 'Mental Health Tool',
+              onTap: () {},
+            ),
             const SizedBox(height: 24),
-            _DashboardButton(icon: Icons.health_and_safety, label: 'Healthy Life Support', onTap: () {}),
+            _DashboardButton(
+              icon: Icons.health_and_safety,
+              label: 'Healthy Life Support',
+              onTap: () {},
+            ),
           ],
         ),
       ),
@@ -147,7 +142,11 @@ class _DashboardButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _DashboardButton({required this.icon, required this.label, required this.onTap});
+  const _DashboardButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -158,11 +157,17 @@ class _DashboardButton extends StatelessWidget {
         icon: Icon(icon, color: Colors.white, size: 32),
         label: Text(
           label,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: kPrimaryColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           elevation: 4,
         ),
         onPressed: onTap,

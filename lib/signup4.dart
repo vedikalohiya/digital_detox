@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login.dart';
 import 'user_model.dart';
+import 'database_helper.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC); // Light beige
@@ -96,36 +97,101 @@ class _Signup4PageState extends State<Signup4Page> {
     });
 
     if (_passwordError == null && _confirmPasswordError == null) {
+      // Validate user profile data
+      print('Validating user profile data...');
+      print('Email: ${widget.userProfile.email}');
+      print('Full Name: ${widget.userProfile.fullName}');
+      print('Phone: ${widget.userProfile.phoneNumber}');
+      print('DOB: ${widget.userProfile.dateOfBirth}');
+      print('Age: ${widget.userProfile.age}');
+      print('Gender: ${widget.userProfile.gender}');
+      print('Screen Time Limit: ${widget.userProfile.screenTimeLimit}');
+
+      if (widget.userProfile.email.isEmpty ||
+          widget.userProfile.fullName.isEmpty ||
+          widget.userProfile.phoneNumber.isEmpty ||
+          widget.userProfile.dateOfBirth.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please complete all required fields in previous steps.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
       try {
         // Show loading dialog
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) =>
-              const Center(child: CircularProgressIndicator()),
+          builder: (context) => const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text(
+                  'Creating your account...',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
         );
 
-        // Create user account with Firebase Auth
-        UserCredential userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
+        final dbHelper = DatabaseHelper();
+
+        try {
+          // Try Firebase first (in case reCAPTCHA is fixed)
+          final auth = FirebaseAuth.instance;
+          UserCredential userCredential = await auth
+              .createUserWithEmailAndPassword(
+                email: widget.userProfile.email,
+                password: _passwordController.text,
+              );
+
+          // Save to Firestore
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userCredential.user!.uid)
+              .set({
+                'fullName': widget.userProfile.fullName,
+                'phoneNumber': widget.userProfile.phoneNumber,
+                'email': widget.userProfile.email,
+                'dateOfBirth': widget.userProfile.dateOfBirth,
+                'age': widget.userProfile.age,
+                'gender': widget.userProfile.gender,
+                'screenTimeLimit': widget.userProfile.screenTimeLimit,
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+
+          print('Successfully created Firebase account');
+        } catch (firebaseError) {
+          print('Firebase signup failed: $firebaseError');
+          print('Falling back to local database...');
+
+          try {
+            // Firebase failed, use local database
+            Map<String, dynamic>? result = await dbHelper.createUser(
               email: widget.userProfile.email,
               password: _passwordController.text,
+              userProfile: widget.userProfile,
             );
 
-        // Save additional user data to Firestore
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userCredential.user!.uid)
-            .set({
-              'fullName': widget.userProfile.fullName,
-              'phoneNumber': widget.userProfile.phoneNumber,
-              'email': widget.userProfile.email,
-              'dateOfBirth': widget.userProfile.dateOfBirth,
-              'age': widget.userProfile.age,
-              'gender': widget.userProfile.gender,
-              'screenTimeLimit': widget.userProfile.screenTimeLimit,
-              'createdAt': FieldValue.serverTimestamp(),
-            });
+            if (result == null) {
+              throw Exception('Database returned null result');
+            }
+
+            print('Successfully created local account: ${result['email']}');
+          } catch (dbError) {
+            print('Local database creation failed: $dbError');
+            throw Exception(
+              'Both Firebase and local database failed: $dbError',
+            );
+          }
+        }
 
         // Hide loading dialog
         if (mounted) Navigator.of(context).pop();
@@ -134,7 +200,7 @@ class _Signup4PageState extends State<Signup4Page> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Account created successfully! Please login.'),
+              content: Text('Account created successfully! You can now login.'),
               backgroundColor: kPrimaryColor,
             ),
           );
@@ -160,8 +226,26 @@ class _Signup4PageState extends State<Signup4Page> {
           case 'invalid-email':
             errorMessage = 'The email address is not valid.';
             break;
+          case 'network-request-failed':
+            errorMessage = 'Network error. Please check your connection.';
+            break;
+          case 'too-many-requests':
+            errorMessage = 'Too many attempts. Please try again later.';
+            break;
+          case 'captcha-check-failed':
+          case 'invalid-app-credential':
+            errorMessage = 'Security verification failed. Please try again.';
+            break;
           default:
-            errorMessage = 'An error occurred during signup. Please try again.';
+            // Check if it's a reCAPTCHA configuration error
+            if (e.message?.contains('CONFIGURATION_NOT_FOUND') == true ||
+                e.message?.contains('reCAPTCHA') == true) {
+              errorMessage =
+                  'Account creation temporarily unavailable. Please try again.';
+            } else {
+              errorMessage = 'Error: ${e.message ?? "Please try again."}';
+            }
+            print('Firebase Auth Error: ${e.code} - ${e.message}');
         }
 
         if (mounted) {
@@ -173,10 +257,14 @@ class _Signup4PageState extends State<Signup4Page> {
         // Hide loading dialog
         if (mounted) Navigator.of(context).pop();
 
+        // Log the actual error for debugging
+        print('Unexpected signup error: $e');
+        print('Stack trace: ${StackTrace.current}');
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('An unexpected error occurred. Please try again.'),
+            SnackBar(
+              content: Text('Signup error: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );

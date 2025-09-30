@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'signup.dart';
 import 'dashboard.dart';
+import 'database_helper.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -49,25 +50,69 @@ class _LoginPageState extends State<LoginPage> {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) =>
-              const Center(child: CircularProgressIndicator()),
+          builder: (context) => const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text(
+                  'Signing you in...',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
         );
 
-        // Sign in with Firebase Auth
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: email.text.trim(),
-          password: pass.text,
-        );
+        final dbHelper = DatabaseHelper();
+        bool loginSuccessful = false;
+
+        try {
+          // Try Firebase login first
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: email.text.trim(),
+            password: pass.text,
+          );
+          loginSuccessful = true;
+          print('Firebase login successful');
+        } catch (firebaseError) {
+          print('Firebase login failed: $firebaseError');
+          print('Trying local database login...');
+
+          // Firebase failed, try local database
+          Map<String, dynamic>? user = await dbHelper.loginUser(
+            email: email.text.trim(),
+            password: pass.text,
+          );
+
+          if (user != null) {
+            loginSuccessful = true;
+            print('Local database login successful: ${user['email']}');
+          }
+        }
 
         // Hide loading indicator
         if (mounted) Navigator.of(context).pop();
 
-        // Navigate to dashboard
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const DashboardPage()),
-          );
+        if (loginSuccessful) {
+          // Navigate to dashboard
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const DashboardPage()),
+            );
+          }
+        } else {
+          // Show login failed message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Invalid email or password'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
       } on FirebaseAuthException catch (e) {
         // Hide loading indicator
