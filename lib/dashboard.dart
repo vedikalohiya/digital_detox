@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'profile_page_new.dart';
 import 'About_us.dart';
 import 'contact_us.dart';
+import 'mental_health_tools.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
@@ -122,7 +123,14 @@ class DashboardPage extends StatelessWidget {
             _DashboardButton(
               icon: Icons.psychology,
               label: 'Mental Health Tool',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MentalHealthToolsPage(),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 24),
             _DashboardButton(
