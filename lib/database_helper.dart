@@ -219,6 +219,23 @@ class DatabaseHelper {
     }
   }
 
+  // Get user by email (for password reset functionality)
+  Future<Map<String, dynamic>?> getUserByEmail(String email) async {
+    try {
+      final db = await database;
+      List<Map<String, dynamic>> users = await db.query(
+        'users',
+        where: 'email = ?',
+        whereArgs: [email.trim().toLowerCase()],
+      );
+
+      return users.isNotEmpty ? users.first : null;
+    } catch (e) {
+      print('Get user by email error: $e');
+      return null;
+    }
+  }
+
   // Get login history for a user
   Future<List<Map<String, dynamic>>> getLoginHistory(String email) async {
     try {
