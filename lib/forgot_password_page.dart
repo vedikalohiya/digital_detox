@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'database_helper.dart';
 import 'signup.dart';
+import 'dart:math';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -11,16 +13,29 @@ class ForgotPasswordPage extends StatefulWidget {
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
-  final _emailController = TextEditingController();
+  final _emailOrPhoneController = TextEditingController();
+  final _otpController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
   bool _isLoading = false;
+  bool _otpSent = false;
+  bool _otpVerified = false;
+  String? _generatedOTP;
+  String? _userEmail;
+  String? _userPhone;
+  Map<String, dynamic>? _foundUser;
 
   final Color kPrimaryColor = const Color(0xFF2E9D8A);
   final Color kBackgroundColor = const Color(0xFFF5F5DC);
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _emailOrPhoneController.dispose();
+    _otpController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -28,7 +43,22 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$").hasMatch(email.trim());
   }
 
-  Future<void> _sendPasswordReset() async {
+  bool _isValidPhone(String phone) {
+    return RegExp(r"^[\+]?[1-9][\d]{0,15}$").hasMatch(phone.trim());
+  }
+
+  bool _isValidPassword(String password) {
+    return RegExp(
+      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])(?!.*\s).{8,}$',
+    ).hasMatch(password);
+  }
+
+  String _generateOTP() {
+    Random random = Random();
+    return (100000 + random.nextInt(900000)).toString();
+  }
+
+  Future<void> _findUserAndSendOTP() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -36,93 +66,149 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     });
 
     try {
-      final email = _emailController.text.trim();
-
-      // Check if user exists in local database first
+      final input = _emailOrPhoneController.text.trim();
       final dbHelper = DatabaseHelper();
-      final localUser = await dbHelper.getUserByEmail(email);
 
-      if (localUser != null) {
-        // User exists in local database
+      Map<String, dynamic>? user;
+
+      // Check if input is email or phone
+      if (_isValidEmail(input)) {
+        user = await dbHelper.getUserByEmail(input);
+      } else if (_isValidPhone(input)) {
+        user = await dbHelper.getUserByPhone(input);
+      }
+
+      if (user == null) {
         setState(() {
           _isLoading = false;
         });
-        _showLocalUserDialog();
+        _showErrorMessage('No account found with this email or phone number.');
         return;
       }
 
-      // Try Firebase password reset
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      // Generate and store OTP
+      _generatedOTP = _generateOTP();
+      _foundUser = user;
+      _userEmail = user['email'];
+      _userPhone = user['phone_number'];
+
+      // Simulate sending OTP (in real app, you'd use SMS/Email service)
+      await _simulateOTPSending();
 
       setState(() {
         _isLoading = false;
+        _otpSent = true;
       });
 
-      if (mounted) {
-        _showSuccessDialog();
-      }
-    } on FirebaseAuthException catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-
-      String errorMessage;
-      switch (e.code) {
-        case 'user-not-found':
-          errorMessage = 'No account found with this email address.';
-          break;
-        case 'invalid-email':
-          errorMessage = 'The email address is not valid.';
-          break;
-        case 'too-many-requests':
-          errorMessage = 'Too many requests. Please try again later.';
-          break;
-        default:
-          errorMessage = 'Unable to send reset email. Please try again.';
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
-        );
-      }
+      _showOTPSentDialog();
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('An error occurred. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      _showErrorMessage('An error occurred. Please try again.');
     }
   }
 
-  void _showSuccessDialog() {
+  Future<void> _simulateOTPSending() async {
+    // Simulate network delay
+    await Future.delayed(const Duration(seconds: 2));
+
+    // In a real app, you would:
+    // 1. Send SMS to _userPhone using a service like Twilio
+    // 2. Send email to _userEmail using a service like SendGrid
+    // For now, we'll just show the OTP in console for testing
+    print('=== OTP SENT ===');
+    print('Phone: $_userPhone');
+    print('Email: $_userEmail');
+    print('OTP: $_generatedOTP');
+    print('================');
+  }
+
+  void _verifyOTP() {
+    final enteredOTP = _otpController.text.trim();
+
+    if (enteredOTP.isEmpty) {
+      _showErrorMessage('Please enter the OTP.');
+      return;
+    }
+
+    if (enteredOTP == _generatedOTP) {
+      setState(() {
+        _otpVerified = true;
+      });
+      _showSuccessMessage(
+        'OTP verified successfully! Now set your new password.',
+      );
+    } else {
+      _showErrorMessage('Invalid OTP. Please try again.');
+    }
+  }
+
+  Future<void> _resetPassword() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_newPasswordController.text != _confirmPasswordController.text) {
+      _showErrorMessage('Passwords do not match.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final dbHelper = DatabaseHelper();
+      await dbHelper.updateUserPassword(
+        _foundUser!['id'],
+        _newPasswordController.text,
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      _showPasswordResetSuccessDialog();
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      _showErrorMessage('Failed to update password. Please try again.');
+    }
+  }
+
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  void _showSuccessMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: kPrimaryColor),
+    );
+  }
+
+  void _showOTPSentDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.check_circle, color: kPrimaryColor),
+            Icon(Icons.message, color: kPrimaryColor),
             const SizedBox(width: 8),
-            const Text('Email Sent'),
+            const Text('OTP Sent'),
           ],
         ),
         content: Text(
-          'A password reset email has been sent to ${_emailController.text.trim()}. '
-          'Please check your inbox and follow the instructions to reset your password.',
+          'OTP has been sent to:\n'
+          'Phone: ${_userPhone ?? 'Not available'}\n'
+          'Email: ${_userEmail ?? 'Not available'}\n\n'
+          'Please enter the 6-digit code to continue.\n\n'
+          'For testing purposes, check the console output for the OTP.',
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
-            },
+            onPressed: () => Navigator.of(context).pop(),
             child: Text('OK', style: TextStyle(color: kPrimaryColor)),
           ),
         ],
@@ -130,40 +216,28 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     );
   }
 
-  void _showLocalUserDialog() {
+  void _showPasswordResetSuccessDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.info, color: Colors.orange),
+            Icon(Icons.check_circle, color: kPrimaryColor),
             const SizedBox(width: 8),
-            const Text('Local Account Found'),
+            const Text('Password Reset Successful'),
           ],
         ),
         content: const Text(
-          'Your account is stored locally on this device. '
-          'For security reasons, password recovery is not available for local accounts. '
-          'You can create a new account or contact support for assistance.',
+          'Your password has been reset successfully! '
+          'You can now login with your new password.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              Navigator.of(context).pop();
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SignupPage()),
-              );
+              Navigator.of(context).pop(); // Go back to login
             },
-            child: Text(
-              'Create New Account',
-              style: TextStyle(color: kPrimaryColor),
-            ),
+            child: Text('OK', style: TextStyle(color: kPrimaryColor)),
           ),
         ],
       ),
@@ -186,143 +260,328 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 40),
+          child: Form(key: _formKey, child: _buildCurrentStep()),
+        ),
+      ),
+    );
+  }
 
-                // Icon
-                Icon(Icons.lock_reset, size: 80, color: kPrimaryColor),
+  Widget _buildCurrentStep() {
+    if (!_otpSent) {
+      return _buildEmailPhoneStep();
+    } else if (!_otpVerified) {
+      return _buildOTPStep();
+    } else {
+      return _buildPasswordResetStep();
+    }
+  }
 
-                const SizedBox(height: 24),
+  Widget _buildEmailPhoneStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 40),
 
-                // Title
-                Text(
-                  'Reset Your Password',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: kPrimaryColor,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+        Icon(Icons.lock_reset, size: 80, color: kPrimaryColor),
 
-                const SizedBox(height: 16),
+        const SizedBox(height: 24),
 
-                // Description
-                Text(
-                  'Enter your email address and we\'ll send you instructions to reset your password.',
-                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                  textAlign: TextAlign.center,
-                ),
+        Text(
+          'Reset Your Password',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: kPrimaryColor,
+          ),
+          textAlign: TextAlign.center,
+        ),
 
-                const SizedBox(height: 40),
+        const SizedBox(height: 16),
 
-                // Email field
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email Address',
-                    hintText: 'Enter your email',
-                    prefixIcon: Icon(Icons.email, color: kPrimaryColor),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: kPrimaryColor, width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your email address';
-                    }
-                    if (!_isValidEmail(value)) {
-                      return 'Please enter a valid email address';
-                    }
-                    return null;
-                  },
-                ),
+        Text(
+          'Enter your email or phone number and we\'ll send you an OTP to reset your password.',
+          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          textAlign: TextAlign.center,
+        ),
 
-                const SizedBox(height: 32),
+        const SizedBox(height: 40),
 
-                // Send Reset Email Button
-                SizedBox(
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _sendPasswordReset,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrimaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Send Reset Instructions',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-                ),
+        TextFormField(
+          controller: _emailOrPhoneController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            labelText: 'Email or Phone Number',
+            hintText: 'Enter your email or phone number',
+            prefixIcon: Icon(Icons.person, color: kPrimaryColor),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: kPrimaryColor, width: 2),
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter your email or phone number';
+            }
+            if (!_isValidEmail(value) && !_isValidPhone(value)) {
+              return 'Please enter a valid email or phone number';
+            }
+            return null;
+          },
+        ),
 
-                const SizedBox(height: 24),
+        const SizedBox(height: 32),
 
-                // Back to Login
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    'Back to Login',
+        SizedBox(
+          height: 50,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _findUserAndSendOTP,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: _isLoading
+                ? const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  )
+                : const Text(
+                    'Send OTP',
                     style: TextStyle(
-                      color: kPrimaryColor,
+                      color: Colors.white,
                       fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
+          ),
+        ),
 
-                const Spacer(),
+        const SizedBox(height: 24),
 
-                // Help text
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue[200]!),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline, color: Colors.blue[600]),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'If you don\'t receive an email, check your spam folder or try again.',
-                          style: TextStyle(
-                            color: Colors.blue[700],
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(
+            'Back to Login',
+            style: TextStyle(
+              color: kPrimaryColor,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
-      ),
+      ],
+    );
+  }
+
+  Widget _buildOTPStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 40),
+
+        Icon(Icons.verified_user, size: 80, color: kPrimaryColor),
+
+        const SizedBox(height: 24),
+
+        Text(
+          'Enter OTP',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: kPrimaryColor,
+          ),
+          textAlign: TextAlign.center,
+        ),
+
+        const SizedBox(height: 16),
+
+        Text(
+          'Enter the 6-digit OTP sent to your phone and email.\n'
+          '(Check console for testing OTP)',
+          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          textAlign: TextAlign.center,
+        ),
+
+        const SizedBox(height: 40),
+
+        TextFormField(
+          controller: _otpController,
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          maxLength: 6,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 8,
+          ),
+          decoration: InputDecoration(
+            labelText: 'OTP',
+            hintText: '000000',
+            prefixIcon: Icon(Icons.lock_outline, color: kPrimaryColor),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: kPrimaryColor, width: 2),
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter the OTP';
+            }
+            if (value.length != 6) {
+              return 'OTP must be 6 digits';
+            }
+            return null;
+          },
+        ),
+
+        const SizedBox(height: 32),
+
+        SizedBox(
+          height: 50,
+          child: ElevatedButton(
+            onPressed: _verifyOTP,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Verify OTP',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _otpSent = false;
+              _otpController.clear();
+            });
+          },
+          child: Text('Resend OTP', style: TextStyle(color: kPrimaryColor)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordResetStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 40),
+
+        Icon(Icons.lock_outline, size: 80, color: kPrimaryColor),
+
+        const SizedBox(height: 24),
+
+        Text(
+          'Set New Password',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: kPrimaryColor,
+          ),
+          textAlign: TextAlign.center,
+        ),
+
+        const SizedBox(height: 16),
+
+        Text(
+          'Enter your new password below.',
+          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          textAlign: TextAlign.center,
+        ),
+
+        const SizedBox(height: 40),
+
+        TextFormField(
+          controller: _newPasswordController,
+          obscureText: true,
+          decoration: InputDecoration(
+            labelText: 'New Password',
+            hintText: 'Enter new password',
+            prefixIcon: Icon(Icons.lock, color: kPrimaryColor),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: kPrimaryColor, width: 2),
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter a password';
+            }
+            if (!_isValidPassword(value)) {
+              return 'Min 8 chars, 1 upper, 1 lower, 1 digit, 1 special';
+            }
+            return null;
+          },
+        ),
+
+        const SizedBox(height: 16),
+
+        TextFormField(
+          controller: _confirmPasswordController,
+          obscureText: true,
+          decoration: InputDecoration(
+            labelText: 'Confirm Password',
+            hintText: 'Confirm new password',
+            prefixIcon: Icon(Icons.lock_outline, color: kPrimaryColor),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: kPrimaryColor, width: 2),
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please confirm your password';
+            }
+            if (value != _newPasswordController.text) {
+              return 'Passwords do not match';
+            }
+            return null;
+          },
+        ),
+
+        const SizedBox(height: 32),
+
+        SizedBox(
+          height: 50,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _resetPassword,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: _isLoading
+                ? const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  )
+                : const Text(
+                    'Reset Password',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+          ),
+        ),
+      ],
     );
   }
 }

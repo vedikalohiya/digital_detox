@@ -236,6 +236,41 @@ class DatabaseHelper {
     }
   }
 
+  // Get user by phone number (for password reset functionality)
+  Future<Map<String, dynamic>?> getUserByPhone(String phone) async {
+    try {
+      final db = await database;
+      List<Map<String, dynamic>> users = await db.query(
+        'users',
+        where: 'phone_number = ?',
+        whereArgs: [phone.trim()],
+      );
+
+      return users.isNotEmpty ? users.first : null;
+    } catch (e) {
+      print('Get user by phone error: $e');
+      return null;
+    }
+  }
+
+  // Update user password
+  Future<void> updateUserPassword(int userId, String newPassword) async {
+    try {
+      final db = await database;
+      String passwordHash = _hashPassword(newPassword);
+
+      await db.update(
+        'users',
+        {'password_hash': passwordHash},
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+    } catch (e) {
+      print('Update password error: $e');
+      rethrow;
+    }
+  }
+
   // Get login history for a user
   Future<List<Map<String, dynamic>>> getLoginHistory(String email) async {
     try {
