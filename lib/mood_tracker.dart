@@ -14,28 +14,44 @@ class _MoodTrackerPageState extends State<MoodTrackerPage> {
       FirebaseFirestore.instance.collection('moods');
 
   final moods = [
-    {"emoji": "😃", "label": "Happy"},
-    {"emoji": "😐", "label": "Neutral"},
-    {"emoji": "😔", "label": "Sad"},
-    {"emoji": "😡", "label": "Angry"},
-    {"emoji": "😴", "label": "Tired"},
+    {"emoji": "😃", "label": "Happy", "msg": "Keep the spirit throughout the day! Spread your joy to others."},
+    {"emoji": "😐", "label": "Neutral", "msg": "It's okay to feel neutral. Take a deep breath and do something you enjoy."},
+    {"emoji": "😔", "label": "Sad", "msg": "It's okay to feel sad. Take care of yourself and talk to someone you trust."},
+    {"emoji": "😡", "label": "Angry", "msg": "Pause and breathe. Try to channel your energy into something positive."},
+    {"emoji": "😴", "label": "Tired", "msg": "Rest is important. Make sure to take breaks and get enough sleep."},
   ];
 
-  void _logMood(String mood) {
+  void _logMood(Map<String, String> mood) {
     final now = DateTime.now();
     final formatted = DateFormat('yyyy-MM-dd – hh:mm a').format(now);
 
     _moodCollection.add({
-      'mood': mood,
+      'mood': mood["label"],
       'time': formatted,
       'timestamp': now,
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Mood '$mood' logged ✅"),
-        backgroundColor: const Color(0xFF2E9D8A),
-        duration: const Duration(seconds: 1),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Text(mood["emoji"]!, style: const TextStyle(fontSize: 32)),
+            const SizedBox(width: 10),
+            Text(mood["label"]!, style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          mood["msg"]!,
+          style: const TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            child: const Text("OK", style: TextStyle(color: Color(0xFF2E9D8A))),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
       ),
     );
   }
@@ -43,7 +59,7 @@ class _MoodTrackerPageState extends State<MoodTrackerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F5DC),
       appBar: AppBar(
         title: const Text(
           "Mood Tracker",
@@ -54,16 +70,40 @@ class _MoodTrackerPageState extends State<MoodTrackerPage> {
       body: Column(
         children: [
           const SizedBox(height: 20),
+          Text(
+            "How are you feeling today?",
+            style: TextStyle(
+              color: Colors.teal.shade700,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 20,
             runSpacing: 15,
             children: moods.map((m) {
               return GestureDetector(
-                onTap: () => _logMood(m["label"]!),
+                onTap: () => _logMood(m),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(m["emoji"]!, style: const TextStyle(fontSize: 40)),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.teal.withOpacity(0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Text(m["emoji"]!, style: const TextStyle(fontSize: 40)),
+                    ),
                     const SizedBox(height: 5),
                     Text(
                       m["label"]!,
