@@ -503,7 +503,7 @@ class _MeditationPageState extends State<MeditationPage>
   }
 
   Widget _buildMeditationArea() {
-    return Container(
+    return SizedBox(
       height: 300,
       child: Stack(
         alignment: Alignment.center,

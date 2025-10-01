@@ -85,7 +85,7 @@ class _AdminDatabaseViewState extends State<AdminDatabaseView> {
                           else
                             ..._allUsers
                                 .map((user) => _buildUserCard(user))
-                                .toList(),
+                                ,
                         ],
                       ),
                     ),
@@ -114,7 +114,7 @@ class _AdminDatabaseViewState extends State<AdminDatabaseView> {
                             ..._allSessions
                                 .take(10)
                                 .map((session) => _buildSessionCard(session))
-                                .toList(),
+                                ,
                         ],
                       ),
                     ),

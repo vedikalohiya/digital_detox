@@ -368,7 +368,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           _formatDate(login['login_time'] ?? ''),
                         ),
                       )
-                      .toList(),
+                      ,
                 ]),
               ],
 
