@@ -106,78 +106,81 @@ class DashboardPage extends StatelessWidget {
           ],
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _DashboardButton(
-              icon: Icons.person,
-              label: 'My Profile',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfilePage()),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-            _DashboardButton(
-              icon: Icons.power_settings_new,
-              label: 'Detox Mode',
-              onTap: () {},
-            ),
-            const SizedBox(height: 24),
-            _DashboardButton(
-              icon: Icons.emoji_events,
-              label: 'Gamification & Motivation',
-              onTap: () {},
-            ),
-            const SizedBox(height: 24),
-            _DashboardButton(
-              icon: Icons.group,
-              label: 'Detox Buddy',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const DetoxBuddyPage(),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-            _DashboardButton(
-              icon: Icons.psychology,
-              label: 'Mental Health Tool',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MentalHealthToolsPage(),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-            _DashboardButton(
-              icon: Icons.health_and_safety,
-              label: 'Healthy Life Support',
-              onTap: () {},
-            ),
-          ],
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: GridView.count(
+            shrinkWrap: true,
+            crossAxisCount: 2,
+            mainAxisSpacing: 20,
+            crossAxisSpacing: 20,
+            childAspectRatio: 1,
+            children: [
+              _DashboardCard(
+                icon: "💡", // Detox Mode
+                label: 'Detox Mode',
+                onTap: () {},
+              ),
+              _DashboardCard(
+                icon: "👥", // Detox Buddy
+                label: 'Detox Buddy',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DetoxBuddyPage(),
+                    ),
+                  );
+                },
+              ),
+              _DashboardCard(
+                icon: "🏆", // Gamification & Motivation
+                label: 'Gamification\n& Motivation',
+                onTap: () {},
+              ),
+              _DashboardCard(
+                icon: "🧘", // Mental Health Tools
+                label: 'Mental Health\nTools',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MentalHealthToolsPage(),
+                    ),
+                  );
+                },
+              ),
+              _DashboardCard(
+                icon: "💚", // Healthy Life Support
+                label: 'Healthy Life\nSupport',
+                onTap: () {},
+              ),
+              _DashboardCard(
+                icon: "👤", // My Profile
+                label: 'My Profile',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfilePage(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _DashboardButton extends StatelessWidget {
-  final IconData icon;
+class _DashboardCard extends StatelessWidget {
+  final String icon;
   final String label;
   final VoidCallback onTap;
 
-  const _DashboardButton({
+  const _DashboardCard({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -185,27 +188,41 @@ class _DashboardButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 60,
-      child: ElevatedButton.icon(
-        icon: Icon(icon, color: Colors.white, size: 32),
-        label: Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [kPrimaryColor, Colors.teal.shade400],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 8,
+              offset: Offset(2, 4),
+            ),
+          ],
         ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: kPrimaryColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 4,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 50)),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ],
         ),
-        onPressed: onTap,
       ),
     );
   }

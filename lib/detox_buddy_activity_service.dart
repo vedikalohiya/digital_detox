@@ -2,37 +2,41 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 enum ActivityType {
-  walk,
-  bikeRide,
-  meditation,
-  reading,
-  exercise,
-  breathing,
-  journaling,
-  phoneDetox,
-  socialMediaBreak,
-  outdoorTime,
-  creativePursuits,
-  mindfulEating,
-  stretching,
-  gardening,
-  musicListening,
-  learning,
+  cricket,
+  football,
+  badminton,
+  tabletennis,
+  bikeRideMusic,
+  walkChat,
+  cookingChallenge,
+  danceParty,
+  photoHunt,
+  gameNight,
+  artChallenge,
+  musicJam,
+  storytime,
+  workoutBattle,
+  cleaningRace,
+  gardenProject,
+  movieNight,
+  bookClub,
+  phoneDetoxChallenge,
+  meditationCircle,
 }
 
 enum ActivityMode {
   individual, // Do it alone but share progress
-  together,   // Do it at the same time (virtual or in-person)
-  flexible,   // Either way is fine
+  together, // Do it at the same time (virtual or in-person)
+  flexible, // Either way is fine
 }
 
 enum ActivityStatus {
-  pending,    // Invitation sent
-  accepted,   // Both buddies agreed
-  active,     // Currently ongoing
-  completed,  // Successfully finished
-  cancelled,  // Cancelled by someone
-  missed,     // Time expired without completion
+  pending, // Invitation sent
+  accepted, // Both buddies agreed
+  active, // Currently ongoing
+  completed, // Successfully finished
+  cancelled, // Cancelled by someone
+  missed, // Time expired without completion
 }
 
 class ActivityTemplate {
@@ -109,16 +113,18 @@ class DetoxBuddyActivity {
       createdBy: data['createdBy'] ?? '',
       participants: List<String>.from(data['participants'] ?? []),
       scheduledTime: (data['scheduledTime'] as Timestamp).toDate(),
-      startTime: data['startTime'] != null 
-          ? (data['startTime'] as Timestamp).toDate() 
+      startTime: data['startTime'] != null
+          ? (data['startTime'] as Timestamp).toDate()
           : null,
-      endTime: data['endTime'] != null 
-          ? (data['endTime'] as Timestamp).toDate() 
+      endTime: data['endTime'] != null
+          ? (data['endTime'] as Timestamp).toDate()
           : null,
       progress: Map<String, dynamic>.from(data['progress'] ?? {}),
       completionStatus: Map<String, bool>.from(data['completionStatus'] ?? {}),
       locationNote: data['locationNote'],
-      motivationalMessages: List<String>.from(data['motivationalMessages'] ?? []),
+      motivationalMessages: List<String>.from(
+        data['motivationalMessages'] ?? [],
+      ),
     );
   }
 
@@ -148,129 +154,238 @@ class DetoxBuddyActivityService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Predefined activity templates
+  // Fun & Engaging Buddy Activity Templates
   static final List<ActivityTemplate> activityTemplates = [
     ActivityTemplate(
-      type: ActivityType.walk,
-      name: "Mindful Walk",
-      description: "Take a peaceful walk and connect with nature",
-      icon: "🚶‍♂️",
-      suggestedDurations: [10, 15, 20, 30, 45, 60],
+      type: ActivityType.cricket,
+      name: "Cricket Battle! 🏏",
+      description:
+          "Play cricket together - compete or team up! Bat, bowl, and have a blast",
+      icon: "🏏",
+      suggestedDurations: [30, 45, 60, 90, 120],
       defaultMode: ActivityMode.together,
-      benefits: ["Fresh air", "Exercise", "Mental clarity", "Stress relief"],
-      difficultyLevel: 2,
-      requiresLocation: true,
-    ),
-    ActivityTemplate(
-      type: ActivityType.bikeRide,
-      name: "Bike Adventure",
-      description: "Explore your neighborhood on two wheels",
-      icon: "🚴‍♂️",
-      suggestedDurations: [15, 20, 30, 45, 60, 90],
-      defaultMode: ActivityMode.together,
-      benefits: ["Cardio workout", "Exploration", "Eco-friendly transport", "Fun"],
+      benefits: [
+        "Teamwork",
+        "Physical fitness",
+        "Fun competition",
+        "Outdoor time",
+      ],
       difficultyLevel: 3,
       requiresLocation: true,
     ),
     ActivityTemplate(
-      type: ActivityType.meditation,
-      name: "Peaceful Meditation",
-      description: "Practice mindfulness and inner peace",
-      icon: "🧘‍♀️",
-      suggestedDurations: [5, 10, 15, 20, 30, 45],
-      defaultMode: ActivityMode.flexible,
-      benefits: ["Stress reduction", "Mental clarity", "Better focus", "Inner peace"],
+      type: ActivityType.football,
+      name: "Football Fun! ⚽",
+      description:
+          "Kick the ball around! Play 1v1, practice together, or just have fun",
+      icon: "⚽",
+      suggestedDurations: [20, 30, 45, 60, 90],
+      defaultMode: ActivityMode.together,
+      benefits: [
+        "Cardio workout",
+        "Coordination",
+        "Competitive spirit",
+        "Teamwork",
+      ],
+      difficultyLevel: 3,
+      requiresLocation: true,
+    ),
+    ActivityTemplate(
+      type: ActivityType.badminton,
+      name: "Badminton Smash! 🏸",
+      description:
+          "Fast-paced racket fun! Challenge each other to exciting rallies",
+      icon: "🏸",
+      suggestedDurations: [20, 30, 45, 60],
+      defaultMode: ActivityMode.together,
+      benefits: [
+        "Quick reflexes",
+        "Hand-eye coordination",
+        "Fun competition",
+        "Cardio",
+      ],
+      difficultyLevel: 2,
+      requiresLocation: true,
+    ),
+    ActivityTemplate(
+      type: ActivityType.tabletennis,
+      name: "Table Tennis Rally! 🏓",
+      description:
+          "Indoor ping pong action! Quick games, intense rallies, lots of laughs",
+      icon: "🏓",
+      suggestedDurations: [15, 20, 30, 45],
+      defaultMode: ActivityMode.together,
+      benefits: [
+        "Quick thinking",
+        "Reflexes",
+        "Indoor fun",
+        "Competitive play",
+      ],
       difficultyLevel: 2,
     ),
     ActivityTemplate(
-      type: ActivityType.reading,
-      name: "Reading Time",
-      description: "Dive into a good book and expand your mind",
-      icon: "📚",
-      suggestedDurations: [15, 20, 30, 45, 60],
-      defaultMode: ActivityMode.individual,
-      benefits: ["Knowledge", "Vocabulary", "Imagination", "Relaxation"],
-      difficultyLevel: 1,
-    ),
-    ActivityTemplate(
-      type: ActivityType.phoneDetox,
-      name: "Phone-Free Zone",
-      description: "Put devices away and reconnect with the real world",
-      icon: "📱❌",
-      suggestedDurations: [15, 30, 45, 60, 90, 120],
+      type: ActivityType.bikeRideMusic,
+      name: "Music Bike Ride! 🚴‍♂️🎵",
+      description:
+          "Cycle together while jamming to your favorite tunes! Sing along and enjoy",
+      icon: "�‍♂️",
+      suggestedDurations: [30, 45, 60, 90, 120],
       defaultMode: ActivityMode.together,
-      benefits: ["Digital wellness", "Present moment awareness", "Real connections"],
-      difficultyLevel: 4,
+      benefits: [
+        "Music therapy",
+        "Exercise",
+        "Shared experience",
+        "Joy and laughter",
+      ],
+      difficultyLevel: 2,
+      requiresLocation: true,
     ),
     ActivityTemplate(
-      type: ActivityType.breathing,
-      name: "Breathing Exercises",
-      description: "Practice deep breathing for relaxation and focus",
-      icon: "💨",
-      suggestedDurations: [5, 10, 15, 20],
+      type: ActivityType.walkChat,
+      name: "Walk & Talk Adventure! 🚶‍♂️💬",
+      description:
+          "Take a stroll and have deep conversations! Share stories, dreams, and laughs",
+      icon: "�‍♂️",
+      suggestedDurations: [20, 30, 45, 60],
+      defaultMode: ActivityMode.together,
+      benefits: ["Bonding", "Fresh air", "Deep conversations", "Stress relief"],
+      difficultyLevel: 1,
+      requiresLocation: true,
+    ),
+    ActivityTemplate(
+      type: ActivityType.cookingChallenge,
+      name: "Cooking Challenge! 👨‍🍳🔥",
+      description:
+          "Cook the same recipe separately or together! Compare results and have fun",
+      icon: "�‍🍳",
+      suggestedDurations: [30, 45, 60, 90],
       defaultMode: ActivityMode.flexible,
-      benefits: ["Stress relief", "Better oxygen flow", "Calm mind", "Lower anxiety"],
-      difficultyLevel: 1,
-    ),
-    ActivityTemplate(
-      type: ActivityType.exercise,
-      name: "Fitness Challenge",
-      description: "Get your body moving with fun exercises",
-      icon: "💪",
-      suggestedDurations: [10, 15, 20, 30, 45],
-      defaultMode: ActivityMode.together,
-      benefits: ["Physical fitness", "Endorphins", "Energy boost", "Health"],
+      benefits: ["Creativity", "Life skills", "Teamwork", "Delicious food"],
       difficultyLevel: 3,
     ),
     ActivityTemplate(
-      type: ActivityType.creativePursuits,
-      name: "Creative Expression",
-      description: "Draw, paint, write, or create something beautiful",
+      type: ActivityType.danceParty,
+      name: "Dance Party! 💃🕺",
+      description:
+          "Put on music and dance together! Learn moves, freestyle, or compete",
+      icon: "�",
+      suggestedDurations: [15, 20, 30, 45],
+      defaultMode: ActivityMode.together,
+      benefits: ["Cardio fun", "Mood boost", "Creativity", "Laughter"],
+      difficultyLevel: 2,
+    ),
+    ActivityTemplate(
+      type: ActivityType.photoHunt,
+      name: "Photo Hunt Adventure! 📸🔍",
+      description:
+          "Create a list and hunt for cool photos! Compare your creativity",
+      icon: "📸",
+      suggestedDurations: [30, 45, 60, 90],
+      defaultMode: ActivityMode.flexible,
+      benefits: [
+        "Creativity",
+        "Exploration",
+        "Memory making",
+        "Fun competition",
+      ],
+      difficultyLevel: 2,
+      requiresLocation: true,
+    ),
+    ActivityTemplate(
+      type: ActivityType.gameNight,
+      name: "Game Night Battle! 🎲🎮",
+      description:
+          "Board games, card games, or party games! Compete and have epic fun",
+      icon: "🎲",
+      suggestedDurations: [30, 45, 60, 90, 120],
+      defaultMode: ActivityMode.together,
+      benefits: [
+        "Strategy thinking",
+        "Social bonding",
+        "Laughter",
+        "Healthy competition",
+      ],
+      difficultyLevel: 2,
+    ),
+    ActivityTemplate(
+      type: ActivityType.artChallenge,
+      name: "Art Challenge! 🎨✨",
+      description:
+          "Create art together! Same topic, different styles, or collaborative pieces",
       icon: "🎨",
-      suggestedDurations: [20, 30, 45, 60, 90],
-      defaultMode: ActivityMode.individual,
-      benefits: ["Self-expression", "Creativity", "Relaxation", "Accomplishment"],
-      difficultyLevel: 2,
-    ),
-    ActivityTemplate(
-      type: ActivityType.socialMediaBreak,
-      name: "Social Media Detox",
-      description: "Take a break from social platforms and live in the moment",
-      icon: "📱💔",
-      suggestedDurations: [30, 60, 120, 180, 240],
-      defaultMode: ActivityMode.together,
-      benefits: ["Mental health", "Real connections", "Productivity", "Self-awareness"],
-      difficultyLevel: 4,
-    ),
-    ActivityTemplate(
-      type: ActivityType.outdoorTime,
-      name: "Nature Connection",
-      description: "Spend quality time outdoors appreciating nature",
-      icon: "🌳",
-      suggestedDurations: [20, 30, 45, 60, 90],
+      suggestedDurations: [30, 45, 60, 90],
       defaultMode: ActivityMode.flexible,
-      benefits: ["Vitamin D", "Fresh air", "Natural beauty", "Grounding"],
+      benefits: [
+        "Creativity",
+        "Relaxation",
+        "Self-expression",
+        "Artistic skills",
+      ],
       difficultyLevel: 2,
-      requiresLocation: true,
     ),
     ActivityTemplate(
-      type: ActivityType.journaling,
-      name: "Reflective Journaling",
-      description: "Write down thoughts, feelings, and experiences",
-      icon: "✍️",
-      suggestedDurations: [10, 15, 20, 30],
-      defaultMode: ActivityMode.individual,
-      benefits: ["Self-reflection", "Emotional processing", "Memory keeping", "Clarity"],
+      type: ActivityType.musicJam,
+      name: "Music Jam Session! 🎵🎸",
+      description:
+          "Make music together! Sing, play instruments, or create beats",
+      icon: "�",
+      suggestedDurations: [20, 30, 45, 60],
+      defaultMode: ActivityMode.together,
+      benefits: ["Musical skills", "Creativity", "Bonding", "Stress relief"],
+      difficultyLevel: 2,
+    ),
+    ActivityTemplate(
+      type: ActivityType.workoutBattle,
+      name: "Workout Battle! 💪🔥",
+      description:
+          "Challenge each other with exercises! Push-ups, squats, planks - who's stronger?",
+      icon: "💪",
+      suggestedDurations: [15, 20, 30, 45],
+      defaultMode: ActivityMode.together,
+      benefits: ["Fitness", "Motivation", "Healthy competition", "Endorphins"],
+      difficultyLevel: 3,
+    ),
+    ActivityTemplate(
+      type: ActivityType.storytime,
+      name: "Story Time! 📚✨",
+      description:
+          "Share stories, read together, or create tales! Let imagination run wild",
+      icon: "📚",
+      suggestedDurations: [20, 30, 45, 60],
+      defaultMode: ActivityMode.together,
+      benefits: ["Imagination", "Bonding", "Language skills", "Relaxation"],
       difficultyLevel: 1,
     ),
     ActivityTemplate(
-      type: ActivityType.mindfulEating,
-      name: "Mindful Eating",
-      description: "Eat slowly and appreciate each bite without distractions",
-      icon: "🍽️",
-      suggestedDurations: [15, 20, 30],
-      defaultMode: ActivityMode.flexible,
-      benefits: ["Better digestion", "Mindfulness", "Taste appreciation", "Healthy habits"],
+      type: ActivityType.phoneDetoxChallenge,
+      name: "Phone Detox Challenge! 📱❌",
+      description:
+          "Put phones away and do real-world activities! Who can last longest?",
+      icon: "📱",
+      suggestedDurations: [30, 45, 60, 90, 120],
+      defaultMode: ActivityMode.together,
+      benefits: [
+        "Digital wellness",
+        "Real connections",
+        "Mindfulness",
+        "Present moment",
+      ],
+      difficultyLevel: 4,
+    ),
+    ActivityTemplate(
+      type: ActivityType.meditationCircle,
+      name: "Meditation Circle! 🧘‍♀️🕯️",
+      description:
+          "Meditate together in peaceful harmony! Share the calming energy",
+      icon: "🧘‍♀️",
+      suggestedDurations: [10, 15, 20, 30],
+      defaultMode: ActivityMode.together,
+      benefits: [
+        "Inner peace",
+        "Stress relief",
+        "Mindfulness",
+        "Spiritual bonding",
+      ],
       difficultyLevel: 2,
     ),
   ];
@@ -311,7 +426,10 @@ class DetoxBuddyActivityService {
         participants: [currentUserId, ...buddyIds],
         scheduledTime: scheduledTime,
         locationNote: locationNote,
-        motivationalMessages: _generateMotivationalMessages(type, durationMinutes),
+        motivationalMessages: _generateMotivationalMessages(
+          type,
+          durationMinutes,
+        ),
       );
 
       final docRef = await _firestore
@@ -343,9 +461,11 @@ class DetoxBuddyActivityService {
         .orderBy('scheduledTime', descending: true)
         .limit(50)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => DetoxBuddyActivity.fromFirestore(doc))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => DetoxBuddyActivity.fromFirestore(doc))
+              .toList(),
+        );
   }
 
   // Start an activity
@@ -368,7 +488,10 @@ class DetoxBuddyActivityService {
   }
 
   // Complete an activity
-  static Future<bool> completeActivity(String activityId, {String? note}) async {
+  static Future<bool> completeActivity(
+    String activityId, {
+    String? note,
+  }) async {
     try {
       final currentUserId = _auth.currentUser?.uid;
       if (currentUserId == null) return false;
@@ -383,14 +506,20 @@ class DetoxBuddyActivityService {
         updates['progress.$currentUserId.note'] = note;
       }
 
-      await _firestore.collection('detox_activities').doc(activityId).update(updates);
+      await _firestore
+          .collection('detox_activities')
+          .doc(activityId)
+          .update(updates);
 
       // Check if all participants completed
-      final doc = await _firestore.collection('detox_activities').doc(activityId).get();
+      final doc = await _firestore
+          .collection('detox_activities')
+          .doc(activityId)
+          .get();
       final activity = DetoxBuddyActivity.fromFirestore(doc);
-      
+
       final allCompleted = activity.participants.every(
-        (participantId) => activity.completionStatus[participantId] == true
+        (participantId) => activity.completionStatus[participantId] == true,
       );
 
       if (allCompleted) {
@@ -407,48 +536,147 @@ class DetoxBuddyActivityService {
   }
 
   // Generate motivational messages based on activity type
-  static List<String> _generateMotivationalMessages(ActivityType type, int duration) {
+  static List<String> _generateMotivationalMessages(
+    ActivityType type,
+    int duration,
+  ) {
     final messages = <String>[];
-    
+
     switch (type) {
-      case ActivityType.walk:
+      case ActivityType.cricket:
         messages.addAll([
-          "🌟 Every step counts towards better health!",
-          "🚶‍♂️ You're walking towards a healthier you!",
-          "🌞 Fresh air and movement - perfect combination!",
-          "💚 Your mind and body will thank you for this walk!",
+          "� Time to hit some boundaries together!",
+          "🔥 Cricket champions in the making!",
+          "⚡ Show your batting and bowling skills!",
+          "🌟 Team spirit and fun - that's cricket!",
         ]);
         break;
-      case ActivityType.meditation:
+      case ActivityType.football:
         messages.addAll([
-          "🧘‍♀️ Find your inner peace, one breath at a time",
-          "✨ This moment of calm will center your day",
-          "🌊 Let your thoughts flow like gentle waves",
-          "💫 You're investing in your mental wellness!",
+          "⚽ Goal! Let's kick some soccer balls!",
+          "� Football fever - here we go!",
+          "💨 Run, dribble, and score together!",
+          "🌟 The beautiful game awaits you!",
         ]);
         break;
-      case ActivityType.phoneDetox:
+      case ActivityType.badminton:
         messages.addAll([
-          "📱❌ Breaking free from digital chains!",
-          "🌍 Welcome back to the real world!",
-          "👥 Real connections await beyond the screen",
-          "🧠 Your brain deserves this digital break!",
+          "🏸 Smash time! Get ready for some rallies!",
+          "⚡ Lightning-fast badminton action!",
+          "� Shuttle wars - may the best player win!",
+          "🌟 Quick reflexes and fun guaranteed!",
         ]);
         break;
-      case ActivityType.bikeRide:
+      case ActivityType.tabletennis:
         messages.addAll([
-          "🚴‍♂️ Pedal your way to happiness!",
-          "🌬️ Feel the wind, embrace the journey!",
-          "🚲 Eco-friendly adventure time!",
-          "⚡ Energy and exploration combined!",
+          "🏓 Ping pong battles commence!",
+          "⚡ Fast-paced table tennis fun!",
+          "🔥 Paddle power - let's rally!",
+          "🌟 Indoor sports at its finest!",
+        ]);
+        break;
+      case ActivityType.bikeRideMusic:
+        messages.addAll([
+          "🚴‍♂️🎵 Pedal to the beat!",
+          "🎶 Music and movement - perfect combo!",
+          "🌟 Sing along while you cycle!",
+          "🔥 Rhythm and wheels in harmony!",
+        ]);
+        break;
+      case ActivityType.walkChat:
+        messages.addAll([
+          "🚶‍♂️💬 Walk and talk - best therapy!",
+          "� Great conversations ahead!",
+          "💫 Steps and stories together!",
+          "🗣️ Fresh air and friendly chats!",
+        ]);
+        break;
+      case ActivityType.cookingChallenge:
+        messages.addAll([
+          "👨‍🍳🔥 Chef mode activated!",
+          "🍳 Cooking up some fun together!",
+          "🌟 Delicious adventures await!",
+          "👩‍🍳 Kitchen creativity unleashed!",
+        ]);
+        break;
+      case ActivityType.danceParty:
+        messages.addAll([
+          "💃🕺 Let's dance the day away!",
+          "🎵 Move to the rhythm!",
+          "🔥 Dance floor domination time!",
+          "✨ Express yourself through dance!",
+        ]);
+        break;
+      case ActivityType.photoHunt:
+        messages.addAll([
+          "�🔍 Camera ready for adventure!",
+          "🌟 Capture the perfect moments!",
+          "📷 Photo hunt expedition begins!",
+          "✨ Creative eyes, creative shots!",
+        ]);
+        break;
+      case ActivityType.gameNight:
+        messages.addAll([
+          "�🎮 Game on! Let the battles begin!",
+          "🔥 Victory awaits the clever!",
+          "🌟 Fun and games galore!",
+          "🎯 Strategy, luck, and laughter!",
+        ]);
+        break;
+      case ActivityType.artChallenge:
+        messages.addAll([
+          "🎨✨ Unleash your inner artist!",
+          "🖌️ Colors, creativity, and fun!",
+          "🌟 Art magic happens here!",
+          "💫 Express yourself beautifully!",
+        ]);
+        break;
+      case ActivityType.musicJam:
+        messages.addAll([
+          "🎵🎸 Rock out together!",
+          "🎶 Harmony and melody time!",
+          "🔥 Musical magic in the making!",
+          "🌟 Sing, play, create together!",
+        ]);
+        break;
+      case ActivityType.workoutBattle:
+        messages.addAll([
+          "💪� Fitness challenge accepted!",
+          "⚡ Stronger together!",
+          "🏋️ Push your limits!",
+          "🌟 Sweat, strength, and success!",
+        ]);
+        break;
+      case ActivityType.storytime:
+        messages.addAll([
+          "📚✨ Story magic awaits!",
+          "🌟 Tales and imagination!",
+          "📖 Words that inspire!",
+          "💫 Stories that connect hearts!",
+        ]);
+        break;
+      case ActivityType.phoneDetoxChallenge:
+        messages.addAll([
+          "📱❌ Digital detox heroes!",
+          "🌍 Real world adventures!",
+          "👥 Genuine connections ahead!",
+          "🧠 Mind freedom challenge!",
+        ]);
+        break;
+      case ActivityType.meditationCircle:
+        messages.addAll([
+          "🧘‍♀️🕯️ Peace and harmony together!",
+          "✨ Inner calm multiplied!",
+          "🌊 Shared serenity flows!",
+          "💫 Mindful moments together!",
         ]);
         break;
       default:
         messages.addAll([
-          "🌟 You're making positive changes!",
-          "💪 Keep up the great work!",
-          "🎯 Focus on your wellness journey!",
-          "✨ This activity will boost your day!",
+          "🌟 Amazing activity ahead!",
+          "💪 Fun and friendship guaranteed!",
+          "🎯 Let's make memories together!",
+          "✨ This will be awesome!",
         ]);
     }
 
@@ -463,7 +691,11 @@ class DetoxBuddyActivityService {
   }
 
   // Notify buddies about new activity
-  static Future<void> _notifyBuddies(String activityId, List<String> buddyIds, DetoxBuddyActivity activity) async {
+  static Future<void> _notifyBuddies(
+    String activityId,
+    List<String> buddyIds,
+    DetoxBuddyActivity activity,
+  ) async {
     // This would integrate with your notification system
     // For now, we'll create notification documents
     for (final buddyId in buddyIds) {

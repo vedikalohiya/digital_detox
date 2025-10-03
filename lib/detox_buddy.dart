@@ -4,8 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:math';
+import 'dart:async';
 import 'detox_buddy_service.dart';
 import 'database_helper.dart';
+import 'detox_buddy_activity_service.dart';
+import 'activity_enhancements.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
@@ -32,11 +35,18 @@ class _DetoxBuddyPageState extends State<DetoxBuddyPage>
   // Stream subscriptions for real-time updates
   Stream<List<Map<String, dynamic>>>? requestsStream;
   Stream<List<Map<String, dynamic>>>? buddiesStream;
+  Stream<List<DetoxBuddyActivity>>? activitiesStream;
+
+  // Activity timer variables
+  Timer? _activityTimer;
+  DetoxBuddyActivity? _currentActivity;
+  int _remainingSeconds = 0;
+  bool _isTimerRunning = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
 
     // Initialize empty streams immediately to prevent errors
     requestsStream = Stream.value([]);
@@ -74,12 +84,13 @@ class _DetoxBuddyPageState extends State<DetoxBuddyPage>
       if (currentUserId == null) {
         final dbHelper = DatabaseHelper();
         final localUser = await dbHelper.getCurrentUser();
-        
+
         if (localUser != null && localUser['email'] != null) {
           // User is logged in locally, try to authenticate with Firebase
           // Generate a temporary user ID for local users
-          currentUserId = 'local_${localUser['email'].toString().hashCode.abs()}';
-          
+          currentUserId =
+              'local_${localUser['email'].toString().hashCode.abs()}';
+
           if (mounted) {
             _showMessage('Using local authentication: ${localUser['email']}');
           }
@@ -88,7 +99,9 @@ class _DetoxBuddyPageState extends State<DetoxBuddyPage>
         // Debug: Show Firebase auth state
         if (mounted) {
           final authUser = _auth.currentUser;
-          _showMessage('Firebase Auth Success: ${authUser?.email ?? "No email"}');
+          _showMessage(
+            'Firebase Auth Success: ${authUser?.email ?? "No email"}',
+          );
         }
       }
 
@@ -109,7 +122,10 @@ class _DetoxBuddyPageState extends State<DetoxBuddyPage>
         _setupStreams();
       } else {
         if (mounted) {
-          _showMessage('No authentication found (Firebase or Local)', isError: true);
+          _showMessage(
+            'No authentication found (Firebase or Local)',
+            isError: true,
+          );
         }
       }
     } catch (e) {
@@ -127,11 +143,25 @@ class _DetoxBuddyPageState extends State<DetoxBuddyPage>
 
   void _setupStreams() {
     if (currentUserId != null) {
-      requestsStream = DetoxBuddyService.getBuddyRequests(currentUserId);
-      buddiesStream = DetoxBuddyService.getMyBuddies(currentUserId);
+      requestsStream = DetoxBuddyService.getBuddyRequests(
+        currentUserId,
+      ).asBroadcastStream();
+      buddiesStream = DetoxBuddyService.getMyBuddies(
+        currentUserId,
+      ).asBroadcastStream();
+      activitiesStream = DetoxBuddyActivityService.getUserActivities(
+        currentUserId,
+      ).asBroadcastStream();
     } else {
-      requestsStream = Stream.value([]);
-      buddiesStream = Stream.value([]);
+      requestsStream = Stream.value(
+        <Map<String, dynamic>>[],
+      ).asBroadcastStream();
+      buddiesStream = Stream.value(
+        <Map<String, dynamic>>[],
+      ).asBroadcastStream();
+      activitiesStream = Stream.value(
+        <DetoxBuddyActivity>[],
+      ).asBroadcastStream();
     }
   }
 
@@ -144,14 +174,15 @@ class _DetoxBuddyPageState extends State<DetoxBuddyPage>
         final localUser = await dbHelper.getCurrentUser();
         if (localUser != null) {
           currentUserData = {
-            'fullName': localUser['fullName'] ?? localUser['name'] ?? 'Local User',
+            'fullName':
+                localUser['fullName'] ?? localUser['name'] ?? 'Local User',
             'email': localUser['email'] ?? 'local@user.com',
             'isLocal': true,
           };
         }
         return;
       }
-      
+
       // Handle Firebase users
       final doc = await _firestore.collection('users').doc(currentUserId).get();
       if (doc.exists) {
@@ -335,7 +366,7 @@ class _DetoxBuddyPageState extends State<DetoxBuddyPage>
                     : 'Please login to access Detox Buddy',
                 style: TextStyle(fontSize: 18, color: Colors.grey[600]),
               ),
-              if (authUser != null) ...[  
+              if (authUser != null) ...[
                 const SizedBox(height: 8),
                 Text(
                   'User: ${authUser.email ?? "Unknown"}\nUID: ${authUser.uid}',
@@ -387,6 +418,7 @@ class _DetoxBuddyPageState extends State<DetoxBuddyPage>
             Tab(icon: Icon(Icons.person_add), text: 'Find Buddy'),
             Tab(icon: Icon(Icons.notifications), text: 'Requests'),
             Tab(icon: Icon(Icons.group), text: 'My Buddies'),
+            Tab(icon: Icon(Icons.fitness_center), text: 'Activities'),
           ],
         ),
       ),
@@ -396,6 +428,7 @@ class _DetoxBuddyPageState extends State<DetoxBuddyPage>
           _buildFindBuddyTab(),
           _buildRequestsTab(),
           _buildMyBuddiesTab(),
+          _buildActivitiesTab(),
         ],
       ),
       floatingActionButton: currentUserId != null
@@ -1055,9 +1088,1018 @@ class _DetoxBuddyPageState extends State<DetoxBuddyPage>
     _showMessage('Buddy messaging feature coming soon!');
   }
 
+  Widget _buildActivitiesTab() {
+    // Local user info banner
+    if (currentUserId != null && currentUserId!.startsWith('local_')) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                border: Border.all(color: Colors.amber.shade200),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.amber.shade700,
+                    size: 30,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Activities feature requires Firebase authentication for buddy synchronization. Try our solo activities below!',
+                      style: TextStyle(
+                        color: Colors.amber.shade800,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Show solo activities for local users
+            _buildSoloActivityTemplates(),
+          ],
+        ),
+      );
+    }
+
+    return activitiesStream == null
+        ? const Center(child: CircularProgressIndicator())
+        : StreamBuilder<List<DetoxBuddyActivity>>(
+            stream: activitiesStream!,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final activities = snapshot.data ?? [];
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Active Activity Timer (if any)
+                    if (_currentActivity != null && _isTimerRunning)
+                      _buildActiveActivityTimer(),
+
+                    // Create New Activity Button
+                    ElevatedButton.icon(
+                      onPressed: _showCreateActivityDialog,
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: const Text(
+                        'Create New Activity',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Activity Stats Section
+                    _buildActivityStatsSection(),
+
+                    const SizedBox(height: 24),
+
+                    // Activity Templates Section
+                    _buildActivityTemplatesSection(),
+
+                    const SizedBox(height: 24),
+
+                    // Recent Activities
+                    if (activities.isNotEmpty) ...[
+                      Text(
+                        'Your Activities',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: kPrimaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ...activities.map(
+                        (activity) => _buildActivityCard(activity),
+                      ),
+                    ] else
+                      _buildEmptyActivitiesState(),
+                  ],
+                ),
+              );
+            },
+          );
+  }
+
+  Widget _buildSoloActivityTemplates() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Solo Activities (No Sync)',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: kPrimaryColor,
+          ),
+        ),
+        const SizedBox(height: 16),
+        ...DetoxBuddyActivityService.activityTemplates
+            .where((template) => template.defaultMode != ActivityMode.together)
+            .take(6)
+            .map((template) => _buildSoloActivityTemplateCard(template)),
+      ],
+    );
+  }
+
+  Widget _buildSoloActivityTemplateCard(ActivityTemplate template) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: kPrimaryColor,
+          child: Text(template.icon, style: const TextStyle(fontSize: 20)),
+        ),
+        title: Text(template.name),
+        subtitle: Text(template.description),
+        trailing: ElevatedButton(
+          onPressed: () => _startSoloActivity(template),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: kPrimaryColor,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Start'),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveActivityTimer() {
+    final minutes = _remainingSeconds ~/ 60;
+    final seconds = _remainingSeconds % 60;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.green, Colors.green.shade700],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            _currentActivity!.title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton.icon(
+                onPressed: _pauseActivity,
+                icon: Icon(_isTimerRunning ? Icons.pause : Icons.play_arrow),
+                label: Text(_isTimerRunning ? 'Pause' : 'Resume'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.green,
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: _completeCurrentActivity,
+                icon: const Icon(Icons.check),
+                label: const Text('Complete'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.green,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityStatsSection() {
+    // Simulated stats for demo - in production this would come from database
+    final totalActivities = DateTime.now().day % 15 + 5; // 5-20 activities
+    final streakDays = DateTime.now().day % 7 + 1; // 1-7 days
+    final favoriteActivity =
+        DetoxBuddyActivityService.activityTemplates[DateTime.now().millisecond %
+            DetoxBuddyActivityService.activityTemplates.length];
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [kPrimaryColor.withOpacity(0.8), kPrimaryColor],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: kPrimaryColor.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '📊 Your Activity Stats',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  title: 'Total Activities',
+                  value: totalActivities.toString(),
+                  icon: Icons.fitness_center,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  title: 'Current Streak',
+                  value: '$streakDays days',
+                  icon: Icons.local_fire_department,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  favoriteActivity.icon,
+                  style: const TextStyle(fontSize: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Favorite Activity',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                      Text(
+                        favoriteActivity.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${(totalActivities * 0.3).round()}x',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            title,
+            style: TextStyle(color: color.withOpacity(0.8), fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityTemplatesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Popular Activities',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: kPrimaryColor,
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 200,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: DetoxBuddyActivityService.activityTemplates.length,
+            itemBuilder: (context, index) {
+              final template =
+                  DetoxBuddyActivityService.activityTemplates[index];
+              return _buildActivityTemplateCard(template);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActivityTemplateCard(ActivityTemplate template) {
+    return Container(
+      width: 200,
+      margin: const EdgeInsets.only(right: 16),
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(template.icon, style: const TextStyle(fontSize: 30)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      template.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                template.description,
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 4,
+                children: template.suggestedDurations.take(3).map((duration) {
+                  return Chip(
+                    label: Text('${duration}min'),
+                    labelStyle: const TextStyle(fontSize: 10),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  );
+                }).toList(),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => _createActivityFromTemplate(template),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Use'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityCard(DetoxBuddyActivity activity) {
+    final isActive = activity.status == ActivityStatus.active;
+    final isPending = activity.status == ActivityStatus.pending;
+    final isCompleted = activity.status == ActivityStatus.completed;
+
+    Color statusColor = Colors.grey;
+    IconData statusIcon = Icons.schedule;
+    String statusText = 'Scheduled';
+
+    if (isActive) {
+      statusColor = Colors.orange;
+      statusIcon = Icons.play_circle_filled;
+      statusText = 'Active';
+    } else if (isPending) {
+      statusColor = Colors.blue;
+      statusIcon = Icons.pending;
+      statusText = 'Pending';
+    } else if (isCompleted) {
+      statusColor = Colors.green;
+      statusIcon = Icons.check_circle;
+      statusText = 'Completed';
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ExpansionTile(
+        leading: CircleAvatar(
+          backgroundColor: statusColor,
+          child: Icon(statusIcon, color: Colors.white),
+        ),
+        title: Text(activity.title),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('${activity.durationMinutes} minutes • ${activity.mode.name}'),
+            Text(
+              statusText,
+              style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(activity.description),
+                const SizedBox(height: 12),
+                if (activity.locationNote != null) ...[
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, size: 16),
+                      const SizedBox(width: 4),
+                      Text(activity.locationNote!),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                Text(
+                  'Participants: ${activity.participants.length}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                if (isPending)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => _acceptActivity(activity),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                          ),
+                          child: const Text(
+                            'Accept',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => _declineActivity(activity),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          child: const Text(
+                            'Decline',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                if (activity.status == ActivityStatus.accepted)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _startActivity(activity),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryColor,
+                      ),
+                      child: const Text(
+                        'Start Activity',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyActivitiesState() {
+    return Center(
+      child: Column(
+        children: [
+          Icon(Icons.fitness_center, size: 80, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            'No activities yet!',
+            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Create your first activity with a buddy',
+            style: TextStyle(color: Colors.grey[500]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Activity Management Methods
+  void _showCreateActivityDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: Container(
+          constraints: const BoxConstraints(maxHeight: 600),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppBar(
+                title: const Text('Create Activity'),
+                backgroundColor: kPrimaryColor,
+                foregroundColor: Colors.white,
+                automaticallyImplyLeading: false,
+                actions: [
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Choose an activity template:',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: DetoxBuddyActivityService
+                              .activityTemplates
+                              .length,
+                          itemBuilder: (context, index) {
+                            final template = DetoxBuddyActivityService
+                                .activityTemplates[index];
+                            return ListTile(
+                              leading: Text(
+                                template.icon,
+                                style: const TextStyle(fontSize: 24),
+                              ),
+                              title: Text(template.name),
+                              subtitle: Text(template.description),
+                              onTap: () {
+                                Navigator.of(context).pop();
+                                _createActivityFromTemplate(template);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _createActivityFromTemplate(ActivityTemplate template) {
+    _showMessage('Activity creation with ${template.name} - Coming Soon! 🚀');
+  }
+
+  void _startSoloActivity(ActivityTemplate template) {
+    // For local users, start a simple timer
+    showDialog(
+      context: context,
+      builder: (context) {
+        int selectedDuration = template.suggestedDurations.first;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('${template.icon} ${template.name}'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(template.description),
+                  const SizedBox(height: 16),
+                  const Text('Select duration:'),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: template.suggestedDurations.map((duration) {
+                      return ChoiceChip(
+                        label: Text('${duration}min'),
+                        selected: selectedDuration == duration,
+                        onSelected: (_) =>
+                            setState(() => selectedDuration = duration),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _startSoloTimer(template, selectedDuration);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryColor,
+                  ),
+                  child: const Text(
+                    'Start',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _startSoloTimer(ActivityTemplate template, int minutes) {
+    setState(() {
+      _remainingSeconds = minutes * 60;
+      _isTimerRunning = true;
+      _currentActivity = DetoxBuddyActivity(
+        id: 'solo_${DateTime.now().millisecondsSinceEpoch}',
+        type: template.type,
+        title: template.name,
+        description: template.description,
+        durationMinutes: minutes,
+        mode: ActivityMode.individual,
+        status: ActivityStatus.active,
+        createdBy: 'local',
+        participants: ['local'],
+        scheduledTime: DateTime.now(),
+      );
+    });
+
+    _activityTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!_isTimerRunning) return;
+
+      setState(() {
+        if (_remainingSeconds > 0) {
+          _remainingSeconds--;
+
+          // Show encouragement at halfway point
+          if (_remainingSeconds == (minutes * 60) ~/ 2) {
+            _showMessage(ActivityMotivation.getEncouragementMessage());
+          }
+        } else {
+          _completeCurrentActivity();
+        }
+      });
+    });
+
+    _showMessage(ActivityMotivation.getStartMessage());
+  }
+
+  Future<void> _startActivity(DetoxBuddyActivity activity) async {
+    final success = await DetoxBuddyActivityService.startActivity(activity.id);
+    if (success) {
+      setState(() {
+        _currentActivity = activity;
+        _remainingSeconds = activity.durationMinutes * 60;
+        _isTimerRunning = true;
+      });
+
+      _activityTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!_isTimerRunning) return;
+
+        setState(() {
+          if (_remainingSeconds > 0) {
+            _remainingSeconds--;
+          } else {
+            _completeCurrentActivity();
+          }
+        });
+      });
+
+      _showMessage('Activity started! Good luck! 💪');
+    } else {
+      _showMessage('Failed to start activity', isError: true);
+    }
+  }
+
+  void _pauseActivity() {
+    setState(() {
+      _isTimerRunning = !_isTimerRunning;
+    });
+
+    if (_isTimerRunning) {
+      _showMessage('Activity resumed! ▶️');
+    } else {
+      _showMessage('Activity paused ⏸️');
+    }
+  }
+
+  Future<void> _completeCurrentActivity() async {
+    _activityTimer?.cancel();
+
+    if (_currentActivity != null) {
+      if (_currentActivity!.id.startsWith('solo_')) {
+        // Solo activity completion
+        _showMessage(
+          '🎉 Congratulations! You completed ${_currentActivity!.title}!',
+        );
+        _showCompletionDialog(_currentActivity!);
+      } else {
+        // Firebase activity completion
+        final success = await DetoxBuddyActivityService.completeActivity(
+          _currentActivity!.id,
+          note: 'Completed successfully!',
+        );
+
+        if (success) {
+          _showMessage('🎉 Activity completed! Well done!');
+          _showCompletionDialog(_currentActivity!);
+        } else {
+          _showMessage('Failed to mark activity as complete', isError: true);
+        }
+      }
+    }
+
+    setState(() {
+      _currentActivity = null;
+      _remainingSeconds = 0;
+      _isTimerRunning = false;
+    });
+  }
+
+  void _showCompletionDialog(DetoxBuddyActivity activity) {
+    final template = DetoxBuddyActivityService.getTemplate(activity.type);
+
+    // Check for achievements (simulate activity counts for demo)
+    final activityCount =
+        DateTime.now().millisecondsSinceEpoch % 10 + 1; // Simulated count
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.green.shade400, Colors.green.shade600],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Success animation
+              TweenAnimationBuilder(
+                tween: Tween<double>(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 600),
+                builder: (context, double value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: const Icon(
+                      Icons.check_circle,
+                      color: Colors.white,
+                      size: 80,
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              Text(
+                ActivityMotivation.getCompletionMessage(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'You completed "${activity.title}" in ${activity.durationMinutes} minutes!',
+                style: const TextStyle(color: Colors.white70, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              if (template != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Benefits Gained:',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...template.benefits
+                          .take(3)
+                          .map(
+                            (benefit) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      benefit,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+
+                  // Show achievement if applicable
+                  Future.delayed(const Duration(milliseconds: 500), () {
+                    ActivityAchievements.checkAndShowAchievements(
+                      context,
+                      totalActivities: activityCount,
+                      meditationCount:
+                          template?.type == ActivityType.meditationCircle
+                          ? 1
+                          : 0,
+                      walkCount: template?.type == ActivityType.walkChat
+                          ? 1
+                          : 0,
+                      phoneDetoxCount:
+                          template?.type == ActivityType.phoneDetoxChallenge
+                          ? 1
+                          : 0,
+                    );
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.green.shade600,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 12,
+                  ),
+                ),
+                child: const Text(
+                  'Awesome!',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _acceptActivity(DetoxBuddyActivity activity) async {
+    final success = await DetoxBuddyActivityService.acceptActivityInvitation(
+      activity.id,
+    );
+    if (success) {
+      _showMessage('Activity accepted! 👍');
+    } else {
+      _showMessage('Failed to accept activity', isError: true);
+    }
+  }
+
+  Future<void> _declineActivity(DetoxBuddyActivity activity) async {
+    final success = await DetoxBuddyActivityService.declineActivityInvitation(
+      activity.id,
+    );
+    if (success) {
+      _showMessage('Activity declined');
+    } else {
+      _showMessage('Failed to decline activity', isError: true);
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
+    _activityTimer?.cancel();
     super.dispose();
   }
 }

@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 class DetoxBuddyService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+
   // Helper method to check if user ID is a local user
   static bool isLocalUser(String userId) {
     return userId.startsWith('local_');
@@ -14,13 +14,13 @@ class DetoxBuddyService {
   static Future<bool> testConnection() async {
     try {
       final currentUser = _auth.currentUser;
-      
+
       // For Firebase users, test Firestore connection
       if (currentUser != null) {
         await _firestore.collection('users').doc(currentUser.uid).get();
         return true;
       }
-      
+
       // For local users, just return true since we don't have a real Firebase connection
       return true;
     } catch (e) {
@@ -32,7 +32,7 @@ class DetoxBuddyService {
   static Future<void> initializeCollections() async {
     try {
       final currentUser = _auth.currentUser;
-      
+
       // Only initialize Firebase collections for Firebase users
       if (currentUser != null) {
         // Create collection references to ensure they exist
@@ -43,7 +43,7 @@ class DetoxBuddyService {
         // Ensure current user has a profile
         await _ensureUserProfile(currentUser);
       }
-      
+
       // For local users, we'll handle this differently in the UI
       // Firebase collections initialized successfully (or skipped for local users)
     } catch (e) {
@@ -164,7 +164,7 @@ class DetoxBuddyService {
   static Stream<List<Map<String, dynamic>>> getBuddyRequests([String? userId]) {
     final currentUserId = userId ?? _auth.currentUser?.uid;
     if (currentUserId == null) return Stream.value([]);
-    
+
     // For local users, return empty stream with info message
     if (isLocalUser(currentUserId)) {
       return Stream.value([]);
@@ -211,7 +211,7 @@ class DetoxBuddyService {
   static Stream<List<Map<String, dynamic>>> getMyBuddies([String? userId]) {
     final currentUserId = userId ?? _auth.currentUser?.uid;
     if (currentUserId == null) return Stream.value([]);
-    
+
     // For local users, return empty stream
     if (isLocalUser(currentUserId)) {
       return Stream.value([]);
