@@ -3,6 +3,7 @@ import 'profile_page_new.dart';
 import 'about_us.dart';
 import 'contact_us.dart';
 import 'mental_health_tools.dart';
+import 'detox_buddy.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
@@ -63,6 +64,19 @@ class DashboardPage extends StatelessWidget {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.group),
+              title: const Text('Detox Buddy'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DetoxBuddyPage(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.info),
               title: const Text('About Us'),
               onTap: () {
@@ -118,6 +132,19 @@ class DashboardPage extends StatelessWidget {
               icon: Icons.emoji_events,
               label: 'Gamification & Motivation',
               onTap: () {},
+            ),
+            const SizedBox(height: 24),
+            _DashboardButton(
+              icon: Icons.group,
+              label: 'Detox Buddy',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DetoxBuddyPage(),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 24),
             _DashboardButton(
