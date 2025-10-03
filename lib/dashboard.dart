@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'profile_page_new.dart';
-import 'About_us.dart';
+import 'about_us.dart';
 import 'contact_us.dart';
 import 'mental_health_tools.dart';
 

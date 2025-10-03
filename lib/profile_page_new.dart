@@ -76,7 +76,7 @@ class _ProfilePageState extends State<ProfilePage> {
         });
       }
     } catch (e) {
-      print('Error loading user data: $e');
+      // Debug: Error loading user data
       setState(() {
         isLoading = false;
       });
@@ -103,9 +103,11 @@ class _ProfilePageState extends State<ProfilePage> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Logout error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Logout error: $e')));
+      }
     }
   }
 
@@ -247,14 +249,17 @@ class _ProfilePageState extends State<ProfilePage> {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [kPrimaryColor, kPrimaryColor.withOpacity(0.7)],
+                    colors: [
+                      kPrimaryColor,
+                      kPrimaryColor.withValues(alpha: 0.7),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: kPrimaryColor.withOpacity(0.3),
+                      color: kPrimaryColor.withValues(alpha: 0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -292,7 +297,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       userData!['email'] ?? '',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
@@ -367,8 +372,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           'Login',
                           _formatDate(login['login_time'] ?? ''),
                         ),
-                      )
-                      ,
+                      ),
                 ]),
               ],
 
@@ -409,7 +413,7 @@ class _ProfilePageState extends State<ProfilePage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

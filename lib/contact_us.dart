@@ -7,7 +7,7 @@ class ContactPage extends StatefulWidget {
   const ContactPage({super.key});
 
   @override
-  _ContactPageState createState() => _ContactPageState();
+  State<ContactPage> createState() => _ContactPageState();
 }
 
 class _ContactPageState extends State<ContactPage> {
@@ -45,12 +45,16 @@ class _ContactPageState extends State<ContactPage> {
                   height: 100,
                   width: 100,
                   decoration: BoxDecoration(
-                    color: kPrimaryColor.withOpacity(0.3),
+                    color: kPrimaryColor.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Center(
-                      child: Icon(Icons.contact_mail,
-                          color: kPrimaryColor, size: 50)),
+                    child: Icon(
+                      Icons.contact_mail,
+                      color: kPrimaryColor,
+                      size: 50,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
 
@@ -111,8 +115,9 @@ class _ContactPageState extends State<ContactPage> {
                   maxLines: 4,
                   onChanged: (value) {
                     setState(() {
-                      _messageError =
-                          value.isEmpty ? "Please enter your message" : null;
+                      _messageError = value.isEmpty
+                          ? "Please enter your message"
+                          : null;
                     });
                   },
                 ),
@@ -123,24 +128,27 @@ class _ContactPageState extends State<ContactPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrimaryColor,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 15),
+                      horizontal: 40,
+                      vertical: 15,
+                    ),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: () {
                     setState(() {
                       _nameError = _nameController.text.isEmpty
                           ? "Please enter your first and last name"
                           : (!fullNameRegex.hasMatch(_nameController.text)
-                              ? "Enter valid first and last name (letters only)"
-                              : null);
+                                ? "Enter valid first and last name (letters only)"
+                                : null);
 
                       _emailError = _emailController.text.isEmpty
                           ? "Please enter your email"
                           : (!_emailController.text.contains("@") ||
-                                  !_emailController.text.contains("."))
-                              ? "Enter a valid email"
-                              : null;
+                                !_emailController.text.contains("."))
+                          ? "Enter a valid email"
+                          : null;
 
                       _messageError = _messageController.text.isEmpty
                           ? "Please enter your message"

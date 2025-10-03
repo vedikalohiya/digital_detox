@@ -144,7 +144,7 @@ class DatabaseHelper {
         'created_at': DateTime.now().toIso8601String(),
       };
     } catch (e) {
-      print('Database create user error: $e');
+      // Debug: Database create user error
       rethrow;
     }
   }
@@ -188,7 +188,7 @@ class DatabaseHelper {
         'screen_time_limit': user['screen_time_limit'],
       };
     } catch (e) {
-      print('Database login error: $e');
+      // Debug: Database login error
       return null;
     }
   }
@@ -214,7 +214,7 @@ class DatabaseHelper {
 
       return users.isNotEmpty ? users.first : null;
     } catch (e) {
-      print('Get current user error: $e');
+      // Debug: Get current user error
       return null;
     }
   }
@@ -231,7 +231,7 @@ class DatabaseHelper {
 
       return users.isNotEmpty ? users.first : null;
     } catch (e) {
-      print('Get user by email error: $e');
+      // Debug: Get user by email error
       return null;
     }
   }
@@ -248,7 +248,7 @@ class DatabaseHelper {
 
       return users.isNotEmpty ? users.first : null;
     } catch (e) {
-      print('Get user by phone error: $e');
+      // Debug: Get user by phone error
       return null;
     }
   }
@@ -266,7 +266,7 @@ class DatabaseHelper {
         whereArgs: [userId],
       );
     } catch (e) {
-      print('Update password error: $e');
+      // Debug: Update password error
       rethrow;
     }
   }
@@ -284,7 +284,7 @@ class DatabaseHelper {
       );
       return sessions;
     } catch (e) {
-      print('Get login history error: $e');
+      // Debug: Get login history error
       return [];
     }
   }
@@ -295,7 +295,7 @@ class DatabaseHelper {
       final db = await database;
       await db.delete('user_sessions');
     } catch (e) {
-      print('Logout error: $e');
+      // Debug: Logout error
     }
   }
 
@@ -303,18 +303,18 @@ class DatabaseHelper {
   Future<void> syncWithFirebase() async {
     try {
       final db = await database;
-      List<Map<String, dynamic>> unsyncedUsers = await db.query(
+      final unsyncedUsers = await db.query(
         'users',
         where: 'synced_with_firebase = ?',
         whereArgs: [0],
       );
 
       // TODO: Implement Firebase sync logic when reCAPTCHA is fixed
-      for (var user in unsyncedUsers) {
-        print('User to sync: ${user['email']}');
+      if (unsyncedUsers.isNotEmpty) {
+        // Debug: Would sync ${unsyncedUsers.length} users to Firebase
       }
     } catch (e) {
-      print('Firebase sync error: $e');
+      // Debug: Firebase sync error
     }
   }
 

@@ -74,27 +74,74 @@ class _Signup2PageState extends State<Signup2Page> {
 
               const SizedBox(height: 24),
 
-              // Gender Options
+              // Gender Options - Modern Radio Implementation
               ...Gender.values.map((gender) {
-                String label = gender.toString().split('.').last[0].toUpperCase() +
+                String label =
+                    gender.toString().split('.').last[0].toUpperCase() +
                     gender.toString().split('.').last.substring(1);
-                return RadioListTile<Gender>(
-                  title: Text(
-                    label,
-                    style: const TextStyle(
-                      color: kPrimaryColor,
-                      fontWeight: FontWeight.bold,
+                return Container(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: _selectedGender == gender
+                          ? kPrimaryColor
+                          : Colors.grey.withValues(alpha: 0.3),
+                      width: _selectedGender == gender ? 2 : 1,
                     ),
                   ),
-                  value: gender,
-                  groupValue: _selectedGender,
-                  activeColor: kPrimaryColor,
-                  onChanged: (Gender? value) {
-                    setState(() {
-                      _selectedGender = value;
-                    });
-                    _validate(); // Re-validate instantly
-                  },
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () {
+                      setState(() {
+                        _selectedGender = gender;
+                      });
+                      _validate(); // Re-validate instantly
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: kPrimaryColor,
+                                width: 2,
+                              ),
+                              color: _selectedGender == gender
+                                  ? kPrimaryColor
+                                  : Colors.transparent,
+                            ),
+                            child: _selectedGender == gender
+                                ? const Icon(
+                                    Icons.circle,
+                                    size: 10,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            label,
+                            style: TextStyle(
+                              color: _selectedGender == gender
+                                  ? kPrimaryColor
+                                  : Colors.black87,
+                              fontWeight: _selectedGender == gender
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 );
               }),
 
@@ -108,7 +155,10 @@ class _Signup2PageState extends State<Signup2Page> {
                       height: 48,
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: kPrimaryColor, width: 2),
+                          side: const BorderSide(
+                            color: kPrimaryColor,
+                            width: 2,
+                          ),
                           foregroundColor: kPrimaryColor,
                           textStyle: const TextStyle(
                             fontWeight: FontWeight.bold,
@@ -135,13 +185,19 @@ class _Signup2PageState extends State<Signup2Page> {
                         onPressed: _selectedGender == null
                             ? null // Disabled until valid
                             : () {
-                                UserProfile updatedProfile = widget.userProfile.copyWith(
-                                  gender: _selectedGender.toString().split('.').last,
-                                );
+                                UserProfile updatedProfile = widget.userProfile
+                                    .copyWith(
+                                      gender: _selectedGender
+                                          .toString()
+                                          .split('.')
+                                          .last,
+                                    );
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => Signup3Page(userProfile: updatedProfile),
+                                    builder: (context) => Signup3Page(
+                                      userProfile: updatedProfile,
+                                    ),
                                   ),
                                 );
                               },

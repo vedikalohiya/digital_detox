@@ -133,11 +133,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     // 2. Email service (like SendGrid, AWS SES, etc.) for _userEmail
 
     // For now, we simulate successful sending and log for testing
-    print('=== OTP SIMULATION ===');
-    print('Phone: $_userPhone');
-    print('Email: $_userEmail');
-    print('OTP Code: $_generatedOTP');
-    print('=====================');
+    // Debug: OTP simulation mode - In production, integrate with SMS/Email services
+    // Debug: Generated OTP for user validation
+    // Debug: Phone and email verification would happen here
   }
 
   void _showOTPSentDialog() {

@@ -12,8 +12,8 @@ class MoodTrackerPage extends StatefulWidget {
 
 class _MoodTrackerPageState extends State<MoodTrackerPage>
     with SingleTickerProviderStateMixin {
-  final CollectionReference _moodCollection =
-      FirebaseFirestore.instance.collection('moods');
+  final CollectionReference _moodCollection = FirebaseFirestore.instance
+      .collection('moods');
 
   // Theme colors from your Login page
   final Color green = const Color(0xFF2E9D8A);
@@ -23,27 +23,27 @@ class _MoodTrackerPageState extends State<MoodTrackerPage>
     {
       "emoji": "😃",
       "label": "Happy",
-      "animation": "assets/animations/happy_bird.json"
+      "animation": "assets/animations/happy_bird.json",
     },
     {
       "emoji": "😐",
       "label": "Neutral",
-      "animation": "assets/animations/onoff.json"
+      "animation": "assets/animations/onoff.json",
     },
     {
       "emoji": "😔",
       "label": "Sad",
-      "animation": "assets/animations/kids_playing.json"
+      "animation": "assets/animations/kids_playing.json",
     },
     {
       "emoji": "😡",
       "label": "Angry",
-      "animation": "assets/animations/onoff.json"
+      "animation": "assets/animations/onoff.json",
     },
     {
       "emoji": "😴",
       "label": "Tired",
-      "animation": "assets/animations/meditation.json"
+      "animation": "assets/animations/meditation.json",
     },
   ];
 
@@ -52,6 +52,9 @@ class _MoodTrackerPageState extends State<MoodTrackerPage>
 
   // Log mood to Firestore and show animation
   void _logMood(String mood, String animation) async {
+    // Store context reference before any async operations
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
     final now = DateTime.now();
     final formatted = DateFormat('yyyy-MM-dd – hh:mm a').format(now);
 
@@ -62,24 +65,30 @@ class _MoodTrackerPageState extends State<MoodTrackerPage>
     });
 
     // Show celebration animation
-    setState(() {
-      showAnimation = true;
-      animationPath = animation;
-    });
-
-    Future.delayed(const Duration(seconds: 2), () {
+    if (mounted) {
       setState(() {
-        showAnimation = false;
+        showAnimation = true;
+        animationPath = animation;
       });
-    });
+    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    // Show success message
+    scaffoldMessenger.showSnackBar(
       SnackBar(
         content: Text("Mood '$mood' logged ✅"),
         backgroundColor: green,
         duration: const Duration(seconds: 1),
       ),
     );
+
+    // Use mounted check for async operations
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          showAnimation = false;
+        });
+      }
+    });
   }
 
   // Build individual mood button
@@ -91,10 +100,7 @@ class _MoodTrackerPageState extends State<MoodTrackerPage>
         children: [
           Text(mood["emoji"]!, style: const TextStyle(fontSize: 40)),
           const SizedBox(height: 5),
-          Text(
-            mood["label"]!,
-            style: TextStyle(fontSize: 14, color: green),
-          ),
+          Text(mood["label"]!, style: TextStyle(fontSize: 14, color: green)),
         ],
       ),
     );
@@ -159,19 +165,30 @@ class _MoodTrackerPageState extends State<MoodTrackerPage>
                         return Card(
                           color: Colors.white,
                           margin: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: green, width: 1)),
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: green, width: 1),
+                          ),
                           child: ListTile(
-                            leading: Text(emoji!,
-                                style: const TextStyle(fontSize: 28)),
-                            title: Text(data['mood'],
-                                style: const TextStyle(fontWeight: FontWeight.bold)),
+                            leading: Text(
+                              emoji!,
+                              style: const TextStyle(fontSize: 28),
+                            ),
+                            title: Text(
+                              data['mood'],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             subtitle: Text(
                               data['time'],
                               style: const TextStyle(
-                                  color: Colors.grey, fontSize: 12),
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         );

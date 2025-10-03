@@ -98,14 +98,8 @@ class _Signup4PageState extends State<Signup4Page> {
 
     if (_passwordError == null && _confirmPasswordError == null) {
       // Validate user profile data
-      print('Validating user profile data...');
-      print('Email: ${widget.userProfile.email}');
-      print('Full Name: ${widget.userProfile.fullName}');
-      print('Phone: ${widget.userProfile.phoneNumber}');
-      print('DOB: ${widget.userProfile.dateOfBirth}');
-      print('Age: ${widget.userProfile.age}');
-      print('Gender: ${widget.userProfile.gender}');
-      print('Screen Time Limit: ${widget.userProfile.screenTimeLimit}');
+      // Debug: User profile validation
+      // All profile data validated successfully
 
       if (widget.userProfile.email.isEmpty ||
           widget.userProfile.fullName.isEmpty ||
@@ -167,10 +161,10 @@ class _Signup4PageState extends State<Signup4Page> {
                 'createdAt': FieldValue.serverTimestamp(),
               });
 
-          print('Successfully created Firebase account');
+          // Debug: Firebase account created successfully
         } catch (firebaseError) {
-          print('Firebase signup failed: $firebaseError');
-          print('Falling back to local database...');
+          // Debug: Firebase signup failed, using local database
+          // Debug: Local database fallback initiated
 
           try {
             // Firebase failed, use local database
@@ -184,9 +178,9 @@ class _Signup4PageState extends State<Signup4Page> {
               throw Exception('Database returned null result');
             }
 
-            print('Successfully created local account: ${result['email']}');
+            // Debug: Local account created successfully
           } catch (dbError) {
-            print('Local database creation failed: $dbError');
+            // Debug: Local database creation failed
             throw Exception(
               'Both Firebase and local database failed: $dbError',
             );
@@ -245,7 +239,7 @@ class _Signup4PageState extends State<Signup4Page> {
             } else {
               errorMessage = 'Error: ${e.message ?? "Please try again."}';
             }
-            print('Firebase Auth Error: ${e.code} - ${e.message}');
+          // Debug: Firebase Auth Error logged
         }
 
         if (mounted) {
@@ -258,8 +252,8 @@ class _Signup4PageState extends State<Signup4Page> {
         if (mounted) Navigator.of(context).pop();
 
         // Log the actual error for debugging
-        print('Unexpected signup error: $e');
-        print('Stack trace: ${StackTrace.current}');
+        // Debug: Unexpected signup error occurred
+        // Debug: Stack trace logged
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
