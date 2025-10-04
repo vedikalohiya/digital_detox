@@ -33,15 +33,15 @@ class TTSService {
 
     // Set up handlers
     _flutterTts.setStartHandler(() {
-      print("TTS Started");
+      // Debug: TTS Started
     });
 
     _flutterTts.setCompletionHandler(() {
-      print("TTS Completed");
+      // Debug: TTS Completed
     });
 
     _flutterTts.setErrorHandler((msg) {
-      print("TTS Error: $msg");
+      // Debug: TTS Error occurred
     });
 
     _isInitialized = true;
@@ -75,7 +75,7 @@ class TTSService {
     try {
       await _flutterTts.speak(text);
     } catch (e) {
-      print("TTS Error: $e");
+      // Debug: TTS Error in speak method
     }
   }
 

@@ -14,7 +14,7 @@ void main() async {
       userAccessGroup: null,
     );
   } catch (e) {
-    print('Firebase Auth settings error: $e');
+    // Debug: Firebase Auth settings error
   }
 
   runApp(const MyApp());

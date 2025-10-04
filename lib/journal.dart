@@ -21,7 +21,7 @@ class _JournalPageState extends State<JournalPage> {
     "Write a message to your future self.",
     "What’s a small win you had today?",
     "Write a thank you note to a friend or family member.",
-    "What is something new you learned today?"
+    "What is something new you learned today?",
   ];
 
   String _currentPrompt = "";
@@ -46,7 +46,7 @@ class _JournalPageState extends State<JournalPage> {
       _entries.insert(0, {
         "text": _controller.text.trim(),
         "date": formatted,
-        "prompt": _currentPrompt
+        "prompt": _currentPrompt,
       });
       _controller.clear();
       _showRandomPrompt();
@@ -87,9 +87,7 @@ class _JournalPageState extends State<JournalPage> {
         iconTheme: const IconThemeData(color: Color(0xFF2E9D8A)),
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: bgGradient,
-        ),
+        decoration: BoxDecoration(gradient: bgGradient),
         child: Column(
           children: [
             const SizedBox(height: 12),
@@ -97,11 +95,11 @@ class _JournalPageState extends State<JournalPage> {
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.92),
+                  color: Colors.white.withValues(alpha: 0.92),
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.teal.withOpacity(0.08),
+                      color: Colors.teal.withValues(alpha: 0.08),
                       blurRadius: 12,
                       offset: Offset(0, 6),
                     ),
@@ -109,7 +107,9 @@ class _JournalPageState extends State<JournalPage> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 18, vertical: 14),
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -167,7 +167,10 @@ class _JournalPageState extends State<JournalPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2E9D8A),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 36,
+                  vertical: 14,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -181,8 +184,11 @@ class _JournalPageState extends State<JournalPage> {
                   ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.self_improvement,
-                            color: Color(0xFFB2DFDB), size: 60),
+                        const Icon(
+                          Icons.self_improvement,
+                          color: Color(0xFFB2DFDB),
+                          size: 60,
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           "No entries yet.\nStart journaling to relax your mind 🌱",
@@ -200,13 +206,15 @@ class _JournalPageState extends State<JournalPage> {
                       itemCount: _entries.length,
                       itemBuilder: (_, i) => Container(
                         margin: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 7),
+                          horizontal: 18,
+                          vertical: 7,
+                        ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.92),
+                          color: Colors.white.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.teal.withOpacity(0.07),
+                              color: Colors.teal.withValues(alpha: 0.07),
                               blurRadius: 8,
                               offset: Offset(0, 4),
                             ),
@@ -215,8 +223,10 @@ class _JournalPageState extends State<JournalPage> {
                         child: ListTile(
                           leading: CircleAvatar(
                             backgroundColor: const Color(0xFFB2DFDB),
-                            child: const Icon(Icons.note_rounded,
-                                color: Color(0xFF2E9D8A)),
+                            child: const Icon(
+                              Icons.note_rounded,
+                              color: Color(0xFF2E9D8A),
+                            ),
                           ),
                           title: Text(
                             _entries[i]["text"]!,
