@@ -76,10 +76,10 @@ class _LoginPageState extends State<LoginPage> {
             password: pass.text,
           );
           loginSuccessful = true;
-          print('Firebase login successful');
+          // Debug: Firebase login successful
         } catch (firebaseError) {
-          print('Firebase login failed: $firebaseError');
-          print('Trying local database login...');
+          // Debug: Firebase login failed, trying local database
+          // Debug: Local database fallback initiated
 
           // Firebase failed, try local database
           Map<String, dynamic>? user = await dbHelper.loginUser(
@@ -89,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
 
           if (user != null) {
             loginSuccessful = true;
-            print('Local database login successful: ${user['email']}');
+            // Debug: Local database login successful
           }
         }
 

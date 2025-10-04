@@ -517,9 +517,9 @@ class _MeditationPageState extends State<MeditationPage>
                 height: 200 * _breathingAnimation.value,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF2E9D8A).withOpacity(0.1),
+                  color: const Color(0xFF2E9D8A).withValues(alpha: 0.1),
                   border: Border.all(
-                    color: const Color(0xFF2E9D8A).withOpacity(0.3),
+                    color: const Color(0xFF2E9D8A).withValues(alpha: 0.3),
                     width: 2,
                   ),
                 ),
@@ -767,7 +767,7 @@ class _MeditationPageState extends State<MeditationPage>
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: const Color(0xFF2E9D8A),
             thumbColor: const Color(0xFF2E9D8A),
-            overlayColor: const Color(0xFF2E9D8A).withOpacity(0.2),
+            overlayColor: const Color(0xFF2E9D8A).withValues(alpha: 0.2),
           ),
           child: Slider(
             value: value,
