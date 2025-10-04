@@ -57,7 +57,7 @@ class MentalHealthToolsPage extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 // Centered Grid
                 Container(
                   constraints: const BoxConstraints(maxWidth: 400),
@@ -105,7 +105,7 @@ class MentalHealthToolsPage extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 // Bottom inspirational quote
                 Container(
                   margin: const EdgeInsets.all(24),
@@ -187,11 +187,7 @@ class MentalHealthToolsPage extends StatelessWidget {
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 28,
-                ),
+                child: Icon(icon, color: color, size: 28),
               ),
               const SizedBox(height: 16),
               // Title
