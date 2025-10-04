@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'About_us.dart';
+import 'profile_page_new.dart';
+import 'about_us.dart';
 import 'contact_us.dart';
 import 'mental_health_tools.dart';
+import 'detox_buddy.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
@@ -51,6 +53,30 @@ class DashboardPage extends StatelessWidget {
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('My Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.group),
+              title: const Text('Detox Buddy'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DetoxBuddyPage(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.info),
               title: const Text('About Us'),
               onTap: () {
@@ -96,6 +122,18 @@ class DashboardPage extends StatelessWidget {
                 onTap: () {},
               ),
               _DashboardCard(
+                icon: "👥", // Detox Buddy
+                label: 'Detox Buddy',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DetoxBuddyPage(),
+                    ),
+                  );
+                },
+              ),
+              _DashboardCard(
                 icon: "🏆", // Gamification & Motivation
                 label: 'Gamification\n& Motivation',
                 onTap: () {},
@@ -116,6 +154,18 @@ class DashboardPage extends StatelessWidget {
                 icon: "💚", // Healthy Life Support
                 label: 'Healthy Life\nSupport',
                 onTap: () {},
+              ),
+              _DashboardCard(
+                icon: "👤", // My Profile
+                label: 'My Profile',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfilePage(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -160,10 +210,7 @@ class _DashboardCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              icon,
-              style: const TextStyle(fontSize: 50),
-            ),
+            Text(icon, style: const TextStyle(fontSize: 50)),
             const SizedBox(height: 12),
             Text(
               label,

@@ -26,7 +26,7 @@ class AboutUsPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 40),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [kPrimaryColor.withOpacity(0.8), kPrimaryColor],
+                  colors: [kPrimaryColor.withValues(alpha: 0.8), kPrimaryColor],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -69,10 +69,22 @@ class AboutUsPage extends StatelessWidget {
             // Features Section
             _buildSectionTitle("Key Features"),
             const SizedBox(height: 10),
-            FeatureTile(icon: Icons.timer, text: "Track and limit your screen time"),
-            FeatureTile(icon: Icons.schedule, text: "Set focus/break intervals"),
-            FeatureTile(icon: Icons.self_improvement, text: "Mindfulness reminders"),
-            FeatureTile(icon: Icons.show_chart, text: "Personal progress insights"),
+            FeatureTile(
+              icon: Icons.timer,
+              text: "Track and limit your screen time",
+            ),
+            FeatureTile(
+              icon: Icons.schedule,
+              text: "Set focus/break intervals",
+            ),
+            FeatureTile(
+              icon: Icons.self_improvement,
+              text: "Mindfulness reminders",
+            ),
+            FeatureTile(
+              icon: Icons.show_chart,
+              text: "Personal progress insights",
+            ),
             const SizedBox(height: 30),
 
             // Call-to-Action Back Button
@@ -81,7 +93,10 @@ class AboutUsPage extends StatelessWidget {
                 icon: const Icon(Icons.arrow_back),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kPrimaryColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 25,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -114,11 +129,7 @@ class AboutUsPage extends StatelessWidget {
             letterSpacing: 0.5,
           ),
         ),
-        const Divider(
-          color: kPrimaryColor,
-          thickness: 2,
-          endIndent: 250,
-        ),
+        const Divider(color: kPrimaryColor, thickness: 2, endIndent: 250),
         const SizedBox(height: 10),
       ],
     );

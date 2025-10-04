@@ -31,7 +31,7 @@ class _AdminDatabaseViewState extends State<AdminDatabaseView> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading database data: $e');
+      // Debug: Error loading database data
       setState(() {
         _isLoading = false;
       });
@@ -43,7 +43,7 @@ class _AdminDatabaseViewState extends State<AdminDatabaseView> {
       final db = await _dbHelper.database;
       return await db.query('user_sessions', orderBy: 'login_time DESC');
     } catch (e) {
-      print('Error getting sessions: $e');
+      // Debug: Error getting sessions
       return [];
     }
   }
@@ -83,9 +83,7 @@ class _AdminDatabaseViewState extends State<AdminDatabaseView> {
                           if (_allUsers.isEmpty)
                             const Text('No users found')
                           else
-                            ..._allUsers
-                                .map((user) => _buildUserCard(user))
-                                ,
+                            ..._allUsers.map((user) => _buildUserCard(user)),
                         ],
                       ),
                     ),
@@ -113,8 +111,7 @@ class _AdminDatabaseViewState extends State<AdminDatabaseView> {
                           else
                             ..._allSessions
                                 .take(10)
-                                .map((session) => _buildSessionCard(session))
-                                ,
+                                .map((session) => _buildSessionCard(session)),
                         ],
                       ),
                     ),
