@@ -56,7 +56,7 @@ class MentalHealthToolsPage extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 Container(
                   constraints: const BoxConstraints(maxWidth: 400),
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -103,7 +103,7 @@ class MentalHealthToolsPage extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 Container(
                   margin: const EdgeInsets.all(24),
                   padding: const EdgeInsets.all(20),
@@ -162,18 +162,22 @@ class MentalHealthToolsPage extends StatelessWidget {
             context,
             PageRouteBuilder(
               pageBuilder: (context, animation, _) => page,
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0.0, 1.0),
-                    end: Offset.zero,
-                  ).animate(CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeInOut,
-                  )),
-                  child: child,
-                );
-              },
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                    return SlideTransition(
+                      position:
+                          Tween<Offset>(
+                            begin: const Offset(0.0, 1.0),
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeInOut,
+                            ),
+                          ),
+                      child: child,
+                    );
+                  },
             ),
           ),
           borderRadius: BorderRadius.circular(20),
@@ -260,16 +264,24 @@ class MentalHealthToolsPage extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(3, (index) {
                             return TweenAnimationBuilder<double>(
-                              duration: Duration(milliseconds: 800 + (index * 200)),
+                              duration: Duration(
+                                milliseconds: 800 + (index * 200),
+                              ),
                               tween: Tween<double>(begin: 0.0, end: 1.0),
                               builder: (context, opacity, child) {
                                 return AnimatedContainer(
-                                  duration: Duration(milliseconds: 500 + (index * 100)),
-                                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                                  duration: Duration(
+                                    milliseconds: 500 + (index * 100),
+                                  ),
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 3,
+                                  ),
                                   height: 5,
                                   width: 5,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.8 * opacity),
+                                    color: Colors.white.withOpacity(
+                                      0.8 * opacity,
+                                    ),
                                     shape: BoxShape.circle,
                                   ),
                                 );
