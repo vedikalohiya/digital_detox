@@ -22,13 +22,9 @@ dependencies:
   sqflite: ^2.3.0
   path: ^1.8.0
   crypto: ^3.0.3
-<<<<<<< HEAD
-  http: ^1.2.0    # ✅ Added for EmailJS integration
-=======
-  # For Detox Buddy features
+  http: ^1.2.0
   qr_flutter: ^4.1.0
   share_plus: ^7.2.2
->>>>>>> fef520251d7ff8cc5882a70f4f7ec7a51c7f2a0f
 
 dev_dependencies:
   flutter_test:
