@@ -1,30 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
-const String serviceId = 'service_f35kvj6';
-const String templateId = 'template_n6z4sso';
-const String publicKey = 'MjQmzNzuNJhCEHXzJ';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Contact Form',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E9D8A)),
-      ),
-      home: const ContactPage(),
-    );
-  }
-}
+const Color kPrimaryColor = Color(0xFF2E9D8A);
 
 class ContactPage extends StatefulWidget {
   const ContactPage({super.key});
@@ -35,9 +11,9 @@ class ContactPage extends StatefulWidget {
 
 class _ContactPageState extends State<ContactPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController messageController = TextEditingController();
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final messageController = TextEditingController();
 
   bool _isSending = false;
 
@@ -46,90 +22,39 @@ class _ContactPageState extends State<ContactPage> {
 
     setState(() => _isSending = true);
 
-    final url = Uri.parse('https://api.emailjs.com/api/v1.0/email/send');
+    // Simulate sending email
+    await Future.delayed(const Duration(seconds: 2));
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'service_id': serviceId,
-          'template_id': templateId,
-          'public_key': publicKey, // ✅ FIXED
-          'template_params': {
-            'from_name': nameController.text,
-            'from_email': emailController.text,
-            'message': messageController.text,
-          },
-        }),
-      );
+    setState(() => _isSending = false);
 
-      setState(() => _isSending = false);
-
-      // Debug log (important for troubleshooting)
-      print('Response: ${response.statusCode}, ${response.body}');
-
-      if (response.statusCode == 200) {
-        _showDialog(
-          title: 'Success',
-          message: 'Email sent successfully!',
-          isSuccess: true,
-        );
-        nameController.clear();
-        emailController.clear();
-        messageController.clear();
-      } else {
-        _showDialog(
-          title: 'Error',
-          message: 'Failed to send email: ${response.body}',
-          isSuccess: false,
-        );
-      }
-    } catch (e) {
-      setState(() => _isSending = false);
-      _showDialog(
-        title: 'Error',
-        message: 'An error occurred: $e',
-        isSuccess: false,
-      );
-    }
-  }
-
-  void _showDialog({required String title, required String message, required bool isSuccess}) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(isSuccess ? Icons.check_circle : Icons.error,
-                color: isSuccess ? Colors.green : Colors.red),
-            const SizedBox(width: 8),
-            Text(title),
-          ],
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Message sent successfully!'),
+          backgroundColor: kPrimaryColor,
         ),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) return 'Please enter your email';
-    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-    if (!emailRegex.hasMatch(value)) return 'Enter a valid email';
-    return null;
+      );
+      nameController.clear();
+      emailController.clear();
+      messageController.clear();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Contact Us')),
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        title: const Text(
+          'Contact Us',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: kPrimaryColor,
+        iconTheme: const IconThemeData(color: Colors.white),
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
+<<<<<<< HEAD
         padding: const EdgeInsets.all(20.0),
         child: Form(
           key: _formKey,
@@ -179,6 +104,183 @@ class _ContactPageState extends State<ContactPage> {
                     ),
             ],
           ),
+=======
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Container(
+                    height: 80,
+                    width: 80,
+                    decoration: BoxDecoration(
+                      color: kPrimaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.contact_mail,
+                      color: kPrimaryColor,
+                      size: 40,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Get in Touch",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: kPrimaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "We'd love to hear from you!",
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Full Name',
+                        prefixIcon: const Icon(
+                          Icons.person,
+                          color: kPrimaryColor,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: kPrimaryColor,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      validator: (value) => value?.isEmpty == true
+                          ? 'Please enter your name'
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: emailController,
+                      decoration: InputDecoration(
+                        labelText: 'Email Address',
+                        prefixIcon: const Icon(
+                          Icons.email,
+                          color: kPrimaryColor,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: kPrimaryColor,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value?.isEmpty == true)
+                          return 'Please enter your email';
+                        if (!RegExp(
+                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                        ).hasMatch(value!)) {
+                          return 'Enter a valid email';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: messageController,
+                      decoration: InputDecoration(
+                        labelText: 'Message',
+                        prefixIcon: const Icon(
+                          Icons.message,
+                          color: kPrimaryColor,
+                        ),
+                        alignLabelWithHint: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: kPrimaryColor,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      maxLines: 4,
+                      validator: (value) => value?.isEmpty == true
+                          ? 'Please enter a message'
+                          : null,
+                    ),
+                    const SizedBox(height: 24),
+
+                    _isSending
+                        ? const CircularProgressIndicator(color: kPrimaryColor)
+                        : SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.send, color: Colors.white),
+                              label: const Text(
+                                'Send Message',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: kPrimaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: _isSending ? null : sendEmail,
+                            ),
+                          ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+            Text(
+              "© 2025 Digital Detox App",
+              style: TextStyle(color: Colors.grey[500], fontSize: 12),
+            ),
+          ],
+>>>>>>> 8edacf1dafe0485dd7ada9dd600c877fd302eeef
         ),
       ),
     );
