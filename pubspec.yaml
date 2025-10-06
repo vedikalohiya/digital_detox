@@ -13,19 +13,22 @@ dependencies:
     sdk: flutter
   sqflite_common_ffi: ^2.3.0 
   lottie: ^3.3.2
-  intl: ^0.20.2   # ✅ add this
+  intl: ^0.20.2
   shared_preferences: ^2.2.2
-  flutter_tts: ^4.0.2  # ✅ Text-to-speech for meditation guidance
+  flutter_tts: ^4.0.2
   firebase_core: ^4.1.1
   firebase_auth: ^6.1.0
   cloud_firestore: ^6.0.2
-  # Local database for backup storage
   sqflite: ^2.3.0
   path: ^1.8.0
   crypto: ^3.0.3
+<<<<<<< HEAD
+  http: ^1.2.0    # ✅ Added for EmailJS integration
+=======
   # For Detox Buddy features
   qr_flutter: ^4.1.0
   share_plus: ^7.2.2
+>>>>>>> fef520251d7ff8cc5882a70f4f7ec7a51c7f2a0f
 
 dev_dependencies:
   flutter_test:
@@ -39,4 +42,3 @@ flutter:
     - assets/animations/kids_playing.json
     - assets/animations/meditation.json
     - assets/animations/onoff.json
-
