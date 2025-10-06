@@ -131,7 +131,6 @@ class _ContactPageState extends State<ContactPage> {
       appBar: AppBar(title: const Text('Contact Us')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
-<<<<<<< HEAD
         child: Form(
           key: _formKey,
           child: Column(
@@ -141,29 +140,6 @@ class _ContactPageState extends State<ContactPage> {
                 decoration: const InputDecoration(
                   labelText: 'Name',
                   prefixIcon: Icon(Icons.person),
-=======
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Logo / hero
-                Container(
-                  height: 100,
-                  width: 100,
-                  decoration: BoxDecoration(
-                    color: kPrimaryColor.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.contact_mail,
-                      color: kPrimaryColor,
-                      size: 50,
-                    ),
-                  ),
->>>>>>> fef520251d7ff8cc5882a70f4f7ec7a51c7f2a0f
                 ),
                 validator: (value) =>
                     value!.isEmpty ? 'Please enter your name' : null,
@@ -185,7 +161,6 @@ class _ContactPageState extends State<ContactPage> {
                   alignLabelWithHint: true,
                   prefixIcon: Icon(Icons.message),
                 ),
-<<<<<<< HEAD
                 maxLines: 6,
                 validator: (value) =>
                     value!.isEmpty ? 'Please enter a message' : null,
@@ -203,83 +178,6 @@ class _ContactPageState extends State<ContactPage> {
                       ),
                     ),
             ],
-=======
-                const SizedBox(height: 15),
-
-                // Message Field
-                TextFormField(
-                  controller: _messageController,
-                  decoration: InputDecoration(
-                    labelText: "Message",
-                    errorText: _messageError,
-                    border: const OutlineInputBorder(),
-                  ),
-                  maxLines: 4,
-                  onChanged: (value) {
-                    setState(() {
-                      _messageError = value.isEmpty
-                          ? "Please enter your message"
-                          : null;
-                    });
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Submit Button
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrimaryColor,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 15,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _nameError = _nameController.text.isEmpty
-                          ? "Please enter your first and last name"
-                          : (!fullNameRegex.hasMatch(_nameController.text)
-                                ? "Enter valid first and last name (letters only)"
-                                : null);
-
-                      _emailError = _emailController.text.isEmpty
-                          ? "Please enter your email"
-                          : (!_emailController.text.contains("@") ||
-                                !_emailController.text.contains("."))
-                          ? "Enter a valid email"
-                          : null;
-
-                      _messageError = _messageController.text.isEmpty
-                          ? "Please enter your message"
-                          : null;
-                    });
-
-                    if (_nameError == null &&
-                        _emailError == null &&
-                        _messageError == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Message Sent!")),
-                      );
-                      _nameController.clear();
-                      _emailController.clear();
-                      _messageController.clear();
-                    }
-                  },
-                  child: const Text("Submit", style: TextStyle(fontSize: 16)),
-                ),
-                const SizedBox(height: 30),
-
-                // Footer
-                const Text(
-                  "© 2025 Detox App",
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
->>>>>>> fef520251d7ff8cc5882a70f4f7ec7a51c7f2a0f
           ),
         ),
       ),
