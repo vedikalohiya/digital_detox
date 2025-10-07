@@ -19,6 +19,7 @@ class _LoginPageState extends State<LoginPage> {
 
   String? emailError;
   String? passError;
+  bool _isPasswordVisible = false; // 👁️ Track password visibility
 
   bool isValidEmail(String e) =>
       RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$").hasMatch(e.trim());
@@ -159,12 +160,25 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 15),
             TextField(
               controller: pass,
-              obscureText: true,
+              obscureText: !_isPasswordVisible,
               decoration: InputDecoration(
                 labelText: "Password",
                 prefixIcon: Icon(Icons.lock, color: green),
                 errorText: passError,
                 border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
+                    color: green,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isPasswordVisible = !_isPasswordVisible;
+                    });
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 15),
