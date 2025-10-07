@@ -5,15 +5,15 @@ import 'landing_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   try {
-    await FirebaseAuth.instance.setSettings(
-      appVerificationDisabledForTesting: true,
-      userAccessGroup: null,
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
     );
+    print("✅ Firebase initialized successfully");
   } catch (e) {
-    // Debug: Firebase Auth settings error
+    print("❌ Firebase initialization error: $e");
+    print("App will continue with local authentication only");
   }
 
   runApp(const MyApp());
@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Digital Detox App',
-      home: LandingPage(),
+      home: LandingPage(), // ✅ Start with Landing first
     );
   }
 }
