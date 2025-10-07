@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'login.dart'; // ✅ go to login after landing
+import 'login.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
+
   @override
   State<LandingPage> createState() => _LandingPageState();
 }
@@ -36,7 +37,6 @@ class _LandingPageState extends State<LandingPage> {
       await Future.delayed(const Duration(seconds: 2));
     }
     if (!mounted) return;
-    // ✅ After animations, go to login
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const LoginPage()),
