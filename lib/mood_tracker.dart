@@ -234,11 +234,12 @@ class _MoodTrackerPageState extends State<MoodTrackerPage>
     scaffoldMessenger.showSnackBar(
       SnackBar(
         content: Text("Mood '$moodKey' logged ✅"),
-        backgroundColor: green,
         duration: const Duration(seconds: 2),
+        backgroundColor: green,
       ),
     );
 
+    // Hide animation after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() {
@@ -288,16 +289,28 @@ class _MoodTrackerPageState extends State<MoodTrackerPage>
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
+        backgroundColor: green,
         title: const Text(
           "Mood Tracker",
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: green,
+        centerTitle: true,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Stack(
         children: [
           Column(
             children: [
+              const SizedBox(height: 20),
+              const Text(
+                "How are you feeling today?",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2E9D8A),
+                ),
+              ),
               const SizedBox(height: 20),
               Wrap(
                 spacing: 20,
@@ -315,24 +328,40 @@ class _MoodTrackerPageState extends State<MoodTrackerPage>
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
-                      return const Center(child: Text("Something went wrong!"));
+                      return const Center(child: Text('Something went wrong'));
                     }
-                    if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator());
+
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(green),
+                        ),
+                      );
                     }
 
                     final docs = snapshot.data!.docs;
-
                     if (docs.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          "No moods logged yet. Tap an emoji to track! 📝",
-                          style: TextStyle(color: Colors.grey),
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.mood, size: 64, color: Colors.grey[400]),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No mood entries yet.\nTrack your first mood above!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     }
 
                     return ListView.builder(
+                      padding: const EdgeInsets.all(16),
                       itemCount: docs.length,
                       itemBuilder: (_, i) {
                         final data = docs[i].data()! as Map<String, dynamic>;
@@ -340,31 +369,53 @@ class _MoodTrackerPageState extends State<MoodTrackerPage>
                         final emoji = moods.containsKey(moodKey)
                             ? moods[moodKey]!["emoji"]
                             : "🙂";
-                        return Card(
-                          color: Colors.white,
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(color: green, width: 1),
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
                           child: ListTile(
-                            leading: Text(
-                              emoji!,
-                              style: const TextStyle(fontSize: 28),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: moods.containsKey(moodKey)
+                                    ? moods[moodKey]!["color"].withValues(
+                                        alpha: 0.1,
+                                      )
+                                    : Colors.grey.withValues(alpha: 0.1),
+                              ),
+                              child: Text(
+                                emoji,
+                                style: const TextStyle(fontSize: 24),
+                              ),
                             ),
                             title: Text(
-                              data['mood'],
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                              moodKey,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: moods.containsKey(moodKey)
+                                    ? moods[moodKey]!["color"]
+                                    : Colors.grey[700],
                               ),
                             ),
                             subtitle: Text(
                               data['time'],
-                              style: const TextStyle(
-                                color: Colors.grey,
+                              style: TextStyle(
+                                color: Colors.grey[600],
                                 fontSize: 12,
                               ),
                             ),
@@ -388,7 +439,7 @@ class _MoodTrackerPageState extends State<MoodTrackerPage>
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -396,6 +447,7 @@ class _MoodTrackerPageState extends State<MoodTrackerPage>
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     children: [
