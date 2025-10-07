@@ -7,6 +7,15 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  try {
+    await FirebaseAuth.instance.setSettings(
+      appVerificationDisabledForTesting: true,
+      userAccessGroup: null,
+    );
+  } catch (e) {
+    // Debug: Firebase Auth settings error
+  }
+
   runApp(const MyApp());
 }
 
