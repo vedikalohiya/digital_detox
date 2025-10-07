@@ -54,57 +54,6 @@ class _ContactPageState extends State<ContactPage> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-<<<<<<< HEAD
-        padding: const EdgeInsets.all(20.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  prefixIcon: Icon(Icons.person),
-                ),
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter your name' : null,
-              ),
-              const SizedBox(height: 15),
-              TextFormField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
-                ),
-                validator: _validateEmail,
-              ),
-              const SizedBox(height: 15),
-              TextFormField(
-                controller: messageController,
-                decoration: const InputDecoration(
-                  labelText: 'Message',
-                  alignLabelWithHint: true,
-                  prefixIcon: Icon(Icons.message),
-                ),
-                maxLines: 6,
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter a message' : null,
-              ),
-              const SizedBox(height: 25),
-              _isSending
-                  ? const CircularProgressIndicator()
-                  : SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.send),
-                        label: const Text('Send Message'),
-                        onPressed: sendEmail,
-                      ),
-                    ),
-            ],
-          ),
-=======
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
@@ -276,11 +225,10 @@ class _ContactPageState extends State<ContactPage> {
 
             const SizedBox(height: 24),
             Text(
-              "© 2025 Digital Detox App",
+              "©️ 2025 Digital Detox App",
               style: TextStyle(color: Colors.grey[500], fontSize: 12),
             ),
           ],
->>>>>>> 8edacf1dafe0485dd7ada9dd600c877fd302eeef
         ),
       ),
     );
