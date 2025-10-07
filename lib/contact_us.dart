@@ -225,7 +225,7 @@ class _ContactPageState extends State<ContactPage> {
 
             const SizedBox(height: 24),
             Text(
-              "©️ 2025 Digital Detox App",
+              "© 2025 Digital Detox App",
               style: TextStyle(color: Colors.grey[500], fontSize: 12),
             ),
           ],
