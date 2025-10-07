@@ -117,12 +117,12 @@ class DashboardPage extends StatelessWidget {
             childAspectRatio: 1,
             children: [
               _DashboardCard(
-                icon: "💡", // Detox Mode
+                icon: "💡", 
                 label: 'Detox Mode',
                 onTap: () {},
               ),
               _DashboardCard(
-                icon: "👥", // Detox Buddy
+                icon: "👥", 
                 label: 'Detox Buddy',
                 onTap: () {
                   Navigator.push(
@@ -134,12 +134,12 @@ class DashboardPage extends StatelessWidget {
                 },
               ),
               _DashboardCard(
-                icon: "🏆", // Gamification & Motivation
+                icon: "🏆", 
                 label: 'Gamification\n& Motivation',
                 onTap: () {},
               ),
               _DashboardCard(
-                icon: "🧘", // Mental Health Tools
+                icon: "🧘", 
                 label: 'Mental Health\nTools',
                 onTap: () {
                   Navigator.push(
@@ -151,12 +151,12 @@ class DashboardPage extends StatelessWidget {
                 },
               ),
               _DashboardCard(
-                icon: "💚", // Healthy Life Support
+                icon: "💚", 
                 label: 'Healthy Life\nSupport',
                 onTap: () {},
               ),
               _DashboardCard(
-                icon: "👤", // My Profile
+                icon: "👤", 
                 label: 'My Profile',
                 onTap: () {
                   Navigator.push(

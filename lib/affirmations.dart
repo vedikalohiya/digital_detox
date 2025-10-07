@@ -108,7 +108,6 @@ class _AffirmationsPageState extends State<AffirmationsPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Option buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

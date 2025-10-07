@@ -31,7 +31,6 @@ class _AdminDatabaseViewState extends State<AdminDatabaseView> {
         _isLoading = false;
       });
     } catch (e) {
-      // Debug: Error loading database data
       setState(() {
         _isLoading = false;
       });
@@ -43,7 +42,6 @@ class _AdminDatabaseViewState extends State<AdminDatabaseView> {
       final db = await _dbHelper.database;
       return await db.query('user_sessions', orderBy: 'login_time DESC');
     } catch (e) {
-      // Debug: Error getting sessions
       return [];
     }
   }
@@ -65,7 +63,6 @@ class _AdminDatabaseViewState extends State<AdminDatabaseView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Users Section
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -91,7 +88,6 @@ class _AdminDatabaseViewState extends State<AdminDatabaseView> {
 
                   const SizedBox(height: 16),
 
-                  // Sessions Section
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),

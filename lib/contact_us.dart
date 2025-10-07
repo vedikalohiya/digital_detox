@@ -22,7 +22,6 @@ class _ContactPageState extends State<ContactPage> {
 
     setState(() => _isSending = true);
 
-    // Simulate sending email
     await Future.delayed(const Duration(seconds: 2));
 
     setState(() => _isSending = false);

@@ -9,22 +9,18 @@ class AuthBypass {
     required Map<String, dynamic> userData,
   }) async {
     try {
-      // Method 1: Try direct creation with disabled settings
       final auth = FirebaseAuth.instance;
 
-      // Configure auth for development
       await auth.setSettings(
         appVerificationDisabledForTesting: true,
         userAccessGroup: null,
       );
 
-      // Create user account
       UserCredential userCredential = await auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Save user data to Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
@@ -40,7 +36,6 @@ class AuthBypass {
         print('Bypass auth error: $e');
       }
 
-      // If still failing, try anonymous auth then link
       try {
         return await _createUserViaAnonymousLink(email, password, userData);
       } catch (linkError) {

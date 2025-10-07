@@ -52,11 +52,9 @@ class DatabaseHelper {
       },
       onUpgrade: (Database db, int oldVersion, int newVersion) async {
         if (oldVersion < 2) {
-          // Drop and recreate tables to fix screen_time_limit data type
           await db.execute('DROP TABLE IF EXISTS user_sessions');
           await db.execute('DROP TABLE IF EXISTS users');
 
-          // Recreate with correct schema
           await db.execute('''
             CREATE TABLE users (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -88,14 +86,12 @@ class DatabaseHelper {
     );
   }
 
-  // Hash password for security
   String _hashPassword(String password) {
     var bytes = utf8.encode(password);
     var digest = sha256.convert(bytes);
     return digest.toString();
   }
 
-  // Create new user in local database
   Future<Map<String, dynamic>?> createUser({
     required String email,
     required String password,
@@ -104,7 +100,6 @@ class DatabaseHelper {
     try {
       final db = await database;
 
-      // Check if user already exists
       List<Map<String, dynamic>> existingUser = await db.query(
         'users',
         where: 'email = ?',
@@ -115,13 +110,10 @@ class DatabaseHelper {
         throw Exception('User with this email already exists');
       }
 
-      // Generate unique ID
       String uid = 'local_${DateTime.now().millisecondsSinceEpoch}';
 
-      // Hash password
       String passwordHash = _hashPassword(password);
 
-      // Insert user
       int userId = await db.insert('users', {
         'uid': uid,
         'email': email,
@@ -144,12 +136,10 @@ class DatabaseHelper {
         'created_at': DateTime.now().toIso8601String(),
       };
     } catch (e) {
-      // Debug: Database create user error
       rethrow;
     }
   }
 
-  // Login user with local database
   Future<Map<String, dynamic>?> loginUser({
     required String email,
     required String password,
@@ -165,12 +155,11 @@ class DatabaseHelper {
       );
 
       if (users.isEmpty) {
-        return null; // User not found or wrong password
+        return null; 
       }
 
       Map<String, dynamic> user = users.first;
 
-      // Create session
       await db.insert('user_sessions', {
         'user_id': user['id'],
         'email': email,
@@ -188,12 +177,10 @@ class DatabaseHelper {
         'screen_time_limit': user['screen_time_limit'],
       };
     } catch (e) {
-      // Debug: Database login error
       return null;
     }
   }
 
-  // Get current user session
   Future<Map<String, dynamic>?> getCurrentUser() async {
     try {
       final db = await database;
@@ -214,12 +201,10 @@ class DatabaseHelper {
 
       return users.isNotEmpty ? users.first : null;
     } catch (e) {
-      // Debug: Get current user error
       return null;
     }
   }
 
-  // Get user by email (for password reset functionality)
   Future<Map<String, dynamic>?> getUserByEmail(String email) async {
     try {
       final db = await database;
@@ -231,12 +216,9 @@ class DatabaseHelper {
 
       return users.isNotEmpty ? users.first : null;
     } catch (e) {
-      // Debug: Get user by email error
       return null;
     }
   }
-
-  // Get user by phone number (for password reset functionality)
   Future<Map<String, dynamic>?> getUserByPhone(String phone) async {
     try {
       final db = await database;
@@ -248,12 +230,10 @@ class DatabaseHelper {
 
       return users.isNotEmpty ? users.first : null;
     } catch (e) {
-      // Debug: Get user by phone error
       return null;
     }
   }
 
-  // Update user password
   Future<void> updateUserPassword(int userId, String newPassword) async {
     try {
       final db = await database;
@@ -266,12 +246,10 @@ class DatabaseHelper {
         whereArgs: [userId],
       );
     } catch (e) {
-      // Debug: Update password error
       rethrow;
     }
   }
 
-  // Get login history for a user
   Future<List<Map<String, dynamic>>> getLoginHistory(String email) async {
     try {
       final db = await database;
@@ -284,12 +262,10 @@ class DatabaseHelper {
       );
       return sessions;
     } catch (e) {
-      // Debug: Get login history error
       return [];
     }
   }
 
-  // Logout user
   Future<void> logout() async {
     try {
       final db = await database;
@@ -299,7 +275,6 @@ class DatabaseHelper {
     }
   }
 
-  // Sync local users to Firebase (when connection is available)
   Future<void> syncWithFirebase() async {
     try {
       final db = await database;
@@ -308,8 +283,6 @@ class DatabaseHelper {
         where: 'synced_with_firebase = ?',
         whereArgs: [0],
       );
-
-      // TODO: Implement Firebase sync logic when reCAPTCHA is fixed
       if (unsyncedUsers.isNotEmpty) {
         // Debug: Would sync ${unsyncedUsers.length} users to Firebase
       }
@@ -318,7 +291,6 @@ class DatabaseHelper {
     }
   }
 
-  // Get all users (for debugging)
   Future<List<Map<String, dynamic>>> getAllUsers() async {
     final db = await database;
     return await db.query('users');

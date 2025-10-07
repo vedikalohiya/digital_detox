@@ -25,18 +25,18 @@ enum ActivityType {
 }
 
 enum ActivityMode {
-  individual, // Do it alone but share progress
-  together, // Do it at the same time (virtual or in-person)
-  flexible, // Either way is fine
+  individual, 
+  together, 
+  flexible, 
 }
 
 enum ActivityStatus {
-  pending, // Invitation sent
-  accepted, // Both buddies agreed
-  active, // Currently ongoing
-  completed, // Successfully finished
-  cancelled, // Cancelled by someone
-  missed, // Time expired without completion
+  pending, 
+  accepted, 
+  active, 
+  completed, 
+  cancelled, 
+  missed, 
 }
 
 class ActivityTemplate {

@@ -20,7 +20,6 @@ class AboutUsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero Section with Gradient Background
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 40),
@@ -56,7 +55,6 @@ class AboutUsPage extends StatelessWidget {
             ),
             const SizedBox(height: 30),
 
-            // About Section
             _buildSectionTitle("About the App"),
             const Text(
               "Our Digital Detox app helps you balance technology and real life. "
@@ -66,7 +64,6 @@ class AboutUsPage extends StatelessWidget {
             ),
             const SizedBox(height: 25),
 
-            // Features Section
             _buildSectionTitle("Key Features"),
             const SizedBox(height: 10),
             FeatureTile(
@@ -87,7 +84,6 @@ class AboutUsPage extends StatelessWidget {
             ),
             const SizedBox(height: 30),
 
-            // Call-to-Action Back Button
             Center(
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.arrow_back),
@@ -115,7 +111,6 @@ class AboutUsPage extends StatelessWidget {
     );
   }
 
-  // Section title helper
   Widget _buildSectionTitle(String text) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,7 +131,6 @@ class AboutUsPage extends StatelessWidget {
   }
 }
 
-// Custom feature tile widget
 class FeatureTile extends StatelessWidget {
   final IconData icon;
   final String text;

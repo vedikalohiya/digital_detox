@@ -49,7 +49,6 @@ class ActivityAchievements {
     final achievement = achievements[achievementKey];
     if (achievement == null) return;
 
-    // Add haptic feedback
     HapticFeedback.mediumImpact();
 
     showDialog(
@@ -80,7 +79,6 @@ class ActivityAchievements {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Celebration animation
               TweenAnimationBuilder(
                 tween: Tween<double>(begin: 0, end: 1),
                 duration: const Duration(milliseconds: 800),
@@ -152,7 +150,6 @@ class ActivityAchievements {
     int walkCount = 0,
     int phoneDetoxCount = 0,
   }) {
-    // Check for achievements and show them
     if (totalActivities == 1) {
       showAchievementDialog(context, 'first_activity');
     } else if (totalActivities == 3) {
@@ -266,10 +263,8 @@ class _ActivityTimerState extends State<ActivityTimer>
     _progressController.forward();
     _pulseController.repeat();
 
-    // Show initial motivation
     _motivationalMessage = ActivityMotivation.getStartMessage();
 
-    // Schedule encouragement messages
     _scheduleEncouragement();
   }
 
@@ -348,7 +343,6 @@ class _ActivityTimerState extends State<ActivityTimer>
           ),
           const SizedBox(height: 24),
 
-          // Circular Progress Timer
           Stack(
             alignment: Alignment.center,
             children: [
@@ -395,7 +389,6 @@ class _ActivityTimerState extends State<ActivityTimer>
 
           const SizedBox(height: 24),
 
-          // Motivational Message
           if (_motivationalMessage != null)
             Container(
               padding: const EdgeInsets.all(16),
@@ -412,7 +405,6 @@ class _ActivityTimerState extends State<ActivityTimer>
 
           const SizedBox(height: 24),
 
-          // Control Buttons
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
