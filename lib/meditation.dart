@@ -354,30 +354,52 @@ class _MeditationPageState extends State<MeditationPage>
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            // Progress Card
-            _buildProgressCard(),
-            const SizedBox(height: 20),
+      body: Column(
+        children: [
+          // Progress Card - smaller and compact
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: _buildProgressCard(),
+          ),
 
-            // Duration Selection
-            _buildDurationSelector(),
-            const SizedBox(height: 20),
+          // Expanded scrollable content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  // Duration Selection
+                  _buildDurationSelector(),
+                  const SizedBox(height: 12),
 
-            // Breathing Pattern Selection
-            _buildPatternSelector(),
-            const SizedBox(height: 30),
+                  // Breathing Pattern Selection
+                  _buildPatternSelector(),
+                  const SizedBox(height: 16),
 
-            // Main Meditation Area
-            _buildMeditationArea(),
-            const SizedBox(height: 30),
+                  // Main Meditation Area - more compact
+                  _buildMeditationArea(),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
 
-            // Control Buttons
-            _buildControlButtons(),
-          ],
-        ),
+          // Fixed bottom controls
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: _buildControlButtons(),
+          ),
+        ],
       ),
     );
   }
@@ -387,7 +409,7 @@ class _MeditationPageState extends State<MeditationPage>
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
           gradient: const LinearGradient(
@@ -504,7 +526,7 @@ class _MeditationPageState extends State<MeditationPage>
 
   Widget _buildMeditationArea() {
     return SizedBox(
-      height: 300,
+      height: 220,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -513,8 +535,8 @@ class _MeditationPageState extends State<MeditationPage>
             animation: _breathingAnimation,
             builder: (context, child) {
               return Container(
-                width: 200 * _breathingAnimation.value,
-                height: 200 * _breathingAnimation.value,
+                width: 150 * _breathingAnimation.value,
+                height: 150 * _breathingAnimation.value,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFF2E9D8A).withValues(alpha: 0.1),
@@ -528,7 +550,7 @@ class _MeditationPageState extends State<MeditationPage>
           ),
 
           // Lottie animation
-          Lottie.asset("assets/animations/meditation.json", height: 150),
+          Lottie.asset("assets/animations/meditation.json", height: 120),
 
           // Progress indicator (when active)
           if (_isActive)
@@ -568,28 +590,28 @@ class _MeditationPageState extends State<MeditationPage>
       children: [
         // Instruction text
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             _instruction,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
               color: Color(0xFF2E9D8A),
             ),
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
 
         // Main control button
         SizedBox(
           width: double.infinity,
-          height: 60,
+          height: 50,
           child: ElevatedButton(
             onPressed: _startMeditation,
             style: ElevatedButton.styleFrom(

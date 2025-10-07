@@ -125,17 +125,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   Future<void> _simulateOTPSending() async {
-    // Simulate network delay for sending OTP
     await Future.delayed(const Duration(seconds: 2));
-
-    // In a real app, you would integrate with:
-    // 1. SMS service (like Twilio, Firebase Auth Phone, etc.) for _userPhone
-    // 2. Email service (like SendGrid, AWS SES, etc.) for _userEmail
-
-    // For now, we simulate successful sending and log for testing
-    // Debug: OTP simulation mode - In production, integrate with SMS/Email services
-    // Debug: Generated OTP for user validation
-    // Debug: Phone and email verification would happen here
   }
 
   void _showOTPSentDialog() {
