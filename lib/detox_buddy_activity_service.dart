@@ -682,9 +682,9 @@ class DetoxBuddyActivityService {
 
     // Add duration-specific messages
     if (duration >= 30) {
-      messages.add("⏰ ${duration} minutes of self-care - you've got this!");
+      messages.add("⏰ $duration minutes of self-care - you've got this!");
     } else {
-      messages.add("⚡ Quick ${duration}-minute boost coming up!");
+      messages.add("⚡ Quick $duration-minute boost coming up!");
     }
 
     return messages..shuffle();

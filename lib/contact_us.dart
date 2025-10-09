@@ -154,8 +154,9 @@ class _ContactPageState extends State<ContactPage> {
                         ),
                       ),
                       validator: (value) {
-                        if (value?.isEmpty == true)
+                        if (value?.isEmpty == true) {
                           return 'Please enter your email';
+                        }
                         if (!RegExp(
                           r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
                         ).hasMatch(value!)) {
