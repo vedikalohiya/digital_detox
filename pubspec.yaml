@@ -25,6 +25,7 @@ dependencies:
   http: ^1.2.0
   qr_flutter: ^4.1.0
   share_plus: ^7.2.2
+  audioplayers: ^5.2.1   # 👈 Added for background meditation sounds
 
 dev_dependencies:
   flutter_test:
@@ -38,3 +39,7 @@ flutter:
     - assets/animations/kids_playing.json
     - assets/animations/meditation.json
     - assets/animations/onoff.json
+    - assets/sounds/rain.mp3
+    - assets/sounds/ocean.mp3
+    - assets/sounds/forest.mp3
+    - assets/sounds/white_noise.mp3
