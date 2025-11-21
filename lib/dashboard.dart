@@ -4,6 +4,8 @@ import 'about_us.dart';
 import 'contact_us.dart';
 import 'mental_health_tools.dart';
 import 'detox_buddy.dart';
+import 'healthy_life_support.dart';
+import 'detox_mode.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
@@ -117,12 +119,19 @@ class DashboardPage extends StatelessWidget {
             childAspectRatio: 1,
             children: [
               _DashboardCard(
-                icon: "💡", 
+                icon: "💡",
                 label: 'Detox Mode',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DetoxModePage(),
+                    ),
+                  );
+                },
               ),
               _DashboardCard(
-                icon: "👥", 
+                icon: "👥",
                 label: 'Detox Buddy',
                 onTap: () {
                   Navigator.push(
@@ -134,12 +143,12 @@ class DashboardPage extends StatelessWidget {
                 },
               ),
               _DashboardCard(
-                icon: "🏆", 
+                icon: "🏆",
                 label: 'Gamification\n& Motivation',
                 onTap: () {},
               ),
               _DashboardCard(
-                icon: "🧘", 
+                icon: "🧘",
                 label: 'Mental Health\nTools',
                 onTap: () {
                   Navigator.push(
@@ -151,18 +160,13 @@ class DashboardPage extends StatelessWidget {
                 },
               ),
               _DashboardCard(
-                icon: "💚", 
+                icon: "💚",
                 label: 'Healthy Life\nSupport',
-                onTap: () {},
-              ),
-              _DashboardCard(
-                icon: "👤", 
-                label: 'My Profile',
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const ProfilePage(),
+                      builder: (context) => const HealthyLifeSupportPage(),
                     ),
                   );
                 },
