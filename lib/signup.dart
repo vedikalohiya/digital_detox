@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login.dart';
 import 'user_model.dart';
 import 'database_helper.dart';
+import 'dashboard.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
@@ -248,38 +249,85 @@ class _SignupPageState extends State<SignupPage> {
 
       // Try Firebase Auth (with fallback)
       try {
+        print(
+          '🔵 Starting Firebase signup for: ${_emailController.text.trim()}',
+        );
+        print('🔵 Password length: ${_passwordController.text.length}');
+
         UserCredential userCredential = await FirebaseAuth.instance
             .createUserWithEmailAndPassword(
               email: _emailController.text.trim(),
               password: _passwordController.text,
             );
 
+        print('🟢 Firebase Auth successful! UID: ${userCredential.user!.uid}');
+
         if (userCredential.user != null) {
-          // Save to Firestore if Firebase works
+          final firestoreData = {
+            ...userProfile.toFirestore(),
+            'uid': userCredential.user!.uid,
+            'createdAt': FieldValue.serverTimestamp(),
+            'lastLogin': FieldValue.serverTimestamp(),
+            'accountStatus': 'active',
+          };
+
+          print(
+            '🔵 Saving to Firestore collection: users/${userCredential.user!.uid}',
+          );
+          print('🔵 Data to save: $firestoreData');
+
+          // Save user profile to Firestore with metadata
           await FirebaseFirestore.instance
               .collection('users')
               .doc(userCredential.user!.uid)
-              .set(userProfile.toMap());
+              .set(firestoreData);
+
+          print('✅ User profile saved to Firestore successfully!');
+          print(
+            '✅ Check Firebase Console: https://console.firebase.google.com/u/0/project/digital-detox-d738f/firestore/databases/-default-/data',
+          );
+
+          // Initialize empty detox sessions collection for this user
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userCredential.user!.uid)
+              .collection('detoxSessions')
+              .doc('_initialized')
+              .set({
+                'initialized': true,
+                'timestamp': FieldValue.serverTimestamp(),
+              });
+
+          print(
+            '✅ User data fully saved to Firestore: ${userCredential.user!.uid}',
+          );
         }
       } catch (firebaseError) {
         // Firebase failed, but local database succeeded
-        print('Firebase error (continuing with local auth): $firebaseError');
+        print('❌ Firebase error: $firebaseError');
+        print('❌ Error type: ${firebaseError.runtimeType}');
+        if (firebaseError is FirebaseAuthException) {
+          print('❌ Firebase Auth Error Code: ${firebaseError.code}');
+          print('❌ Firebase Auth Error Message: ${firebaseError.message}');
+        }
       }
 
       // Close loading dialog
       if (mounted) Navigator.pop(context);
 
-      // Show success message and navigate to login
+      // Show success message and navigate directly to dashboard (user is already logged in)
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Registration successful! Please login.'),
+            content: Text('Registration successful! Welcome to Digital Detox!'),
             backgroundColor: kPrimaryColor,
           ),
         );
-        Navigator.pushReplacement(
+        // User is already authenticated by Firebase, so go directly to Dashboard
+        Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
+          MaterialPageRoute(builder: (context) => const DashboardPage()),
+          (route) => false,
         );
       }
     } on FirebaseAuthException catch (e) {

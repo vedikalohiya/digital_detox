@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'landing_page.dart';
+import 'dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,10 +26,30 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Digital Detox App',
-      home: LandingPage(), // ✅ Start with Landing first
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          // Show loading while checking auth state
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(color: Color(0xFF2E9D8A)),
+              ),
+            );
+          }
+
+          // If user is logged in, go to Dashboard
+          if (snapshot.hasData && snapshot.data != null) {
+            return const DashboardPage();
+          }
+
+          // If not logged in, show Landing page
+          return const LandingPage();
+        },
+      ),
     );
   }
 }

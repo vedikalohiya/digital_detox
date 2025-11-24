@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'signup.dart';
 import 'dashboard.dart';
 import 'database_helper.dart';
@@ -25,22 +26,22 @@ class _LoginPageState extends State<LoginPage> {
       RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$").hasMatch(e.trim());
 
   bool isValidPass(String p) => RegExp(
-        r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])(?!.*\s).{8,}$',
-      ).hasMatch(p);
+    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])(?!.*\s).{8,}$',
+  ).hasMatch(p);
 
   void validate() {
     setState(() {
       emailError = email.text.trim().isEmpty
           ? 'Email is required'
           : (!isValidEmail(email.text)
-              ? 'Enter a valid email (e.g. abc@gmail.com)'
-              : null);
+                ? 'Enter a valid email (e.g. abc@gmail.com)'
+                : null);
 
       passError = pass.text.isEmpty
           ? 'Password is required'
           : (!isValidPass(pass.text)
-              ? 'Min 8 chars, 1 upper, 1 lower, 1 digit, 1 special, no spaces'
-              : null);
+                ? 'Min 8 chars, 1 upper, 1 lower, 1 digit, 1 special, no spaces'
+                : null);
     });
   }
 
@@ -51,20 +52,31 @@ class _LoginPageState extends State<LoginPage> {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => const Center(
-            child: CircularProgressIndicator(),
-          ),
+          builder: (context) =>
+              const Center(child: CircularProgressIndicator()),
         );
 
         final dbHelper = DatabaseHelper();
         bool loginSuccessful = false;
+        String? userId;
 
         try {
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
-            email: email.text.trim(),
-            password: pass.text,
-          );
+          UserCredential userCredential = await FirebaseAuth.instance
+              .signInWithEmailAndPassword(
+                email: email.text.trim(),
+                password: pass.text,
+              );
           loginSuccessful = true;
+          userId = userCredential.user?.uid;
+
+          // Update lastLogin timestamp in Firestore
+          if (userId != null) {
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(userId)
+                .update({'lastLogin': FieldValue.serverTimestamp()});
+            print('✅ Login timestamp updated for user: $userId');
+          }
         } catch (_) {
           Map<String, dynamic>? user = await dbHelper.loginUser(
             email: email.text.trim(),
@@ -190,7 +202,8 @@ class _LoginPageState extends State<LoginPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => const ForgotPasswordPage()),
+                        builder: (_) => const ForgotPasswordPage(),
+                      ),
                     );
                   },
                   child: Text(
@@ -214,8 +227,10 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: handleLogin,
               style: ElevatedButton.styleFrom(
                 backgroundColor: green,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 15,
+                ),
               ),
               child: const Text("Login", style: TextStyle(color: Colors.white)),
             ),

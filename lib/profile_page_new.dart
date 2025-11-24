@@ -2,9 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'database_helper.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login.dart';
-import 'admin_database_view.dart';
+import 'firestore_service.dart';
+import 'database_helper.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
@@ -20,8 +21,9 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? userData;
   bool isLoading = true;
-  String userSource = ''; // 'Firebase' or 'Local Database'
+  String userSource = 'Firebase'; // Always Firebase now
   List<Map<String, dynamic>> loginHistory = [];
+  final FirestoreService _firestoreService = FirestoreService();
 
   @override
   void initState() {
@@ -30,71 +32,231 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserData() async {
-    try {
-      // Check Firebase user first
-      User? firebaseUser = FirebaseAuth.instance.currentUser;
+    setState(() {
+      isLoading = true;
+    });
 
-      if (firebaseUser != null) {
+    try {
+      // Check local database FIRST
+      final dbHelper = DatabaseHelper();
+      Map<String, dynamic>? localUser = await dbHelper.getCurrentUser();
+
+      print('🔍 Profile Page - Loading user data...');
+      print('🔍 Local DB User: ${localUser != null ? "FOUND" : "NOT FOUND"}');
+
+      if (localUser != null) {
+        // User found in local database - USE THIS DATA
+        print('✅ Showing user from local database: ${localUser['email']}');
         setState(() {
           userData = {
-            'full_name': firebaseUser.displayName ?? 'Firebase User',
-            'email': firebaseUser.email ?? '',
-            'uid': firebaseUser.uid,
-            'phone_number': '',
-            'date_of_birth': '',
-            'age': 0,
-            'gender': '',
-            'screen_time_limit': 8,
+            'full_name': localUser['full_name'] ?? 'User',
+            'email': localUser['email'] ?? '',
+            'uid': localUser['id']?.toString() ?? '',
+            'phone_number': localUser['phone_number'] ?? '',
+            'date_of_birth': localUser['date_of_birth'] ?? '',
+            'age': localUser['age'] ?? 0,
+            'gender': localUser['gender'] ?? '',
+            'screen_time_limit': localUser['screen_time_limit'] ?? 2.0,
             'created_at':
-                firebaseUser.metadata.creationTime?.toIso8601String() ?? '',
+                localUser['created_at'] ?? DateTime.now().toIso8601String(),
+            'last_login': DateTime.now().toIso8601String(),
           };
-          userSource = 'Firebase';
+          userSource = 'Local Database';
           isLoading = false;
         });
         return;
       }
 
-      // Check local database user
-      final dbHelper = DatabaseHelper();
-      Map<String, dynamic>? localUser = await dbHelper.getCurrentUser();
+      // If not in local, try Firebase
+      await FirebaseAuth.instance.currentUser?.reload();
+      User? firebaseUser = FirebaseAuth.instance.currentUser;
 
-      if (localUser != null) {
-        // Get login history
-        List<Map<String, dynamic>> history = await dbHelper.getLoginHistory(
-          localUser['email'],
-        );
+      print('🔍 Firebase User: ${firebaseUser?.email ?? "NOT LOGGED IN"}');
+      print('🔍 User UID: ${firebaseUser?.uid ?? "NO UID"}');
+      if (firebaseUser != null) {
+        // Fetch user profile from Firestore
+        print('🔍 Fetching user profile from Firestore...');
+        Map<String, dynamic>? firestoreData = await _firestoreService
+            .getUserProfile();
 
-        setState(() {
-          userData = localUser;
-          userSource = 'Local Database';
-          loginHistory = history;
-          isLoading = false;
-        });
+        print('🔍 Firestore Data: ${firestoreData?.toString() ?? "NULL"}');
+
+        if (firestoreData != null) {
+          // Use Firestore data - user has migrated
+          setState(() {
+            userData = {
+              'full_name': firestoreData['fullName'] ?? 'User',
+              'email': firestoreData['email'] ?? firebaseUser.email ?? '',
+              'uid': firebaseUser.uid,
+              'phone_number': firestoreData['phoneNumber'] ?? '',
+              'date_of_birth': firestoreData['dateOfBirth'] ?? '',
+              'age': firestoreData['age'] ?? 0,
+              'gender': firestoreData['gender'] ?? '',
+              'screen_time_limit': firestoreData['screenTimeLimit'] ?? 2.0,
+              'created_at': firestoreData['createdAt'] != null
+                  ? (firestoreData['createdAt'] as Timestamp)
+                        .toDate()
+                        .toIso8601String()
+                  : firebaseUser.metadata.creationTime?.toIso8601String() ?? '',
+              'last_login': firestoreData['lastLogin'] != null
+                  ? (firestoreData['lastLogin'] as Timestamp)
+                        .toDate()
+                        .toIso8601String()
+                  : '',
+            };
+            userSource = 'Firebase';
+            isLoading = false;
+          });
+          return;
+        } else {
+          // Firestore data not found, but Firebase user exists
+          print('⚠️ No Firestore data found, showing basic Firebase info');
+          // Show basic Firebase user data immediately
+          setState(() {
+            userData = {
+              'full_name':
+                  firebaseUser.displayName ??
+                  firebaseUser.email?.split('@')[0] ??
+                  'User',
+              'email': firebaseUser.email ?? '',
+              'uid': firebaseUser.uid,
+              'phone_number': '',
+              'date_of_birth': '',
+              'age': 0,
+              'gender': '',
+              'screen_time_limit': 2.0,
+              'created_at':
+                  firebaseUser.metadata.creationTime?.toIso8601String() ?? '',
+              'last_login': DateTime.now().toIso8601String(),
+            };
+            userSource = 'Firebase';
+            isLoading = false;
+          });
+          // Try to migrate from local database in background
+          _autoMigrateFromLocal(firebaseUser);
+          return;
+        }
       } else {
-        setState(() {
-          isLoading = false;
-        });
+        print('❌ No Firebase user found - user is not logged in');
       }
+
+      // No user at all
+      setState(() {
+        isLoading = false;
+      });
     } catch (e) {
-      // Debug: Error loading user data
+      print('Error loading user data: $e');
       setState(() {
         isLoading = false;
       });
     }
   }
 
+  Future<void> _autoMigrateFromLocal(User firebaseUser) async {
+    try {
+      final dbHelper = DatabaseHelper();
+      Map<String, dynamic>? localUser = await dbHelper.getCurrentUser();
+
+      if (localUser != null && localUser['email'] == firebaseUser.email) {
+        // Silently migrate to Firestore
+        await _saveToFirestore(firebaseUser, localUser);
+        print('✅ Auto-migrated user from local to Firebase');
+        // Reload data
+        _loadUserData();
+      } else {
+        // Show basic Firebase data - user is new or no local data
+        setState(() {
+          userData = {
+            'full_name': firebaseUser.displayName ?? 'User',
+            'email': firebaseUser.email ?? '',
+            'uid': firebaseUser.uid,
+            'phone_number': '',
+            'date_of_birth': '',
+            'age': 0,
+            'gender': '',
+            'screen_time_limit': 2.0,
+            'created_at':
+                firebaseUser.metadata.creationTime?.toIso8601String() ?? '',
+            'last_login': DateTime.now().toIso8601String(),
+          };
+          userSource = 'Firebase';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Auto-migration failed: $e');
+      // Even if migration fails, show basic Firebase user data
+      setState(() {
+        userData = {
+          'full_name': firebaseUser.displayName ?? 'User',
+          'email': firebaseUser.email ?? '',
+          'uid': firebaseUser.uid,
+          'phone_number': '',
+          'date_of_birth': '',
+          'age': 0,
+          'gender': '',
+          'screen_time_limit': 2.0,
+          'created_at':
+              firebaseUser.metadata.creationTime?.toIso8601String() ?? '',
+          'last_login': DateTime.now().toIso8601String(),
+        };
+        userSource = 'Firebase';
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _saveToFirestore(
+    User firebaseUser,
+    Map<String, dynamic> localUser,
+  ) async {
+    final fullName = localUser['full_name']?.toString() ?? '';
+    final phoneNumber = localUser['phone_number']?.toString() ?? '';
+    final email = localUser['email']?.toString() ?? firebaseUser.email ?? '';
+    final dateOfBirth = localUser['date_of_birth']?.toString() ?? '';
+    final age = (localUser['age'] is int)
+        ? localUser['age']
+        : (int.tryParse(localUser['age']?.toString() ?? '0') ?? 0);
+    final gender = localUser['gender']?.toString() ?? '';
+    final screenTimeLimit = (localUser['screen_time_limit'] is double)
+        ? localUser['screen_time_limit']
+        : (double.tryParse(
+                localUser['screen_time_limit']?.toString() ?? '7.0',
+              ) ??
+              7.0);
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .set({
+          'fullName': fullName,
+          'phoneNumber': phoneNumber,
+          'email': email,
+          'dateOfBirth': dateOfBirth,
+          'age': age,
+          'gender': gender,
+          'screenTimeLimit': screenTimeLimit,
+          'uid': firebaseUser.uid,
+          'createdAt': FieldValue.serverTimestamp(),
+          'lastLogin': FieldValue.serverTimestamp(),
+          'accountStatus': 'active',
+          'migratedFromLocal': true,
+        }, SetOptions(merge: true));
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .collection('detoxSessions')
+        .doc('_initialized')
+        .set({'initialized': true, 'timestamp': FieldValue.serverTimestamp()});
+  }
+
   Future<void> _logout() async {
     try {
-      // Logout from Firebase if logged in
-      if (FirebaseAuth.instance.currentUser != null) {
-        await FirebaseAuth.instance.signOut();
-      }
+      // Logout from Firebase
+      await FirebaseAuth.instance.signOut();
 
-      // Logout from local database
-      final dbHelper = DatabaseHelper();
-      await dbHelper.logout();
-
-      // Navigate to login page
+      // Navigate to login page (StreamBuilder in main.dart will handle redirect)
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
@@ -180,18 +342,6 @@ class _ProfilePageState extends State<ProfilePage> {
         centerTitle: true,
         leading: const BackButton(color: Colors.white),
         actions: [
-          if (userSource == 'Local Database')
-            IconButton(
-              icon: const Icon(Icons.admin_panel_settings, color: Colors.white),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AdminDatabaseView(),
-                  ),
-                );
-              },
-            ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: _logout,
@@ -203,46 +353,6 @@ class _ProfilePageState extends State<ProfilePage> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // User Source Status
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: userSource == 'Firebase'
-                      ? Colors.green[100]
-                      : Colors.blue[100],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: userSource == 'Firebase'
-                        ? Colors.green
-                        : Colors.blue,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      userSource == 'Firebase'
-                          ? Icons.cloud_done
-                          : Icons.storage,
-                      color: userSource == 'Firebase'
-                          ? Colors.green
-                          : Colors.blue,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Logged in via: $userSource',
-                      style: TextStyle(
-                        color: userSource == 'Firebase'
-                            ? Colors.green[800]
-                            : Colors.blue[800],
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
               // Profile Header Card
               Container(
                 width: double.infinity,
@@ -294,7 +404,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      userData!['email'] ?? '',
+                      'Welcome to Digital Detox',
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.white.withValues(alpha: 0.8),
@@ -305,76 +415,55 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: 24),
 
-              // Personal Information Card
-              _infoCard('Personal Information', [
-                _infoRow('Name', userData!['full_name'] ?? 'Not provided'),
-                _infoRow('Phone', userData!['phone_number'] ?? 'Not provided'),
-                _infoRow('Email', userData!['email'] ?? 'Not provided'),
-                _infoRow('DOB', userData!['date_of_birth'] ?? 'Not provided'),
+              // Account Status Card
+              _infoCard('Account Status', [
+                _infoRow('Status', 'Active'),
                 _infoRow(
-                  'Age',
-                  userData!['age'] != null
-                      ? '${userData!['age']} yrs'
-                      : 'Not provided',
-                ),
-                _infoRow('Gender', userData!['gender'] ?? 'Not provided'),
-              ]),
-              const SizedBox(height: 16),
-
-              // Screen Time Card
-              _infoCard('Screen Time Settings', [
-                _infoRow(
-                  'Daily Limit',
-                  userData!['screen_time_limit'] != null
-                      ? '${userData!['screen_time_limit']} hrs'
-                      : 'Not set',
-                ),
-                _progressRow(
-                  'Today\'s Usage',
-                  (userData!['screen_time_limit'] ?? 8) * 0.6,
-                  userData!['screen_time_limit'] ?? 8,
+                  'Member Since',
+                  _formatDate(userData!['created_at'] ?? ''),
                 ),
               ]),
               const SizedBox(height: 16),
 
-              // Account Information Card
-              _infoCard('Account Information', [
-                _infoRow(
-                  'User ID',
-                  userData!['uid'] ?? userData!['id']?.toString() ?? 'N/A',
+              // Data Storage Info Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green.shade200),
                 ),
-                _infoRow('Account Type', userSource),
-                _infoRow('Created', _formatDate(userData!['created_at'] ?? '')),
-                if (userSource == 'Local Database' &&
-                    userData!['synced_with_firebase'] == 0)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      'Note: Account data is stored locally. Will sync when Firebase is available.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
-                        color: Colors.orange,
+                child: Row(
+                  children: [
+                    Icon(Icons.cloud_done, color: Colors.green[700], size: 32),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '🔒 Secure Cloud Storage',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green[900],
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Your personal information is securely stored in our database and is not displayed here for your privacy.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green[800],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-              ]),
-
-              // Login History (for local database users)
-              if (userSource == 'Local Database' &&
-                  loginHistory.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                _infoCard('Recent Login History', [
-                  ...loginHistory
-                      .take(5)
-                      .map(
-                        (login) => _infoRow(
-                          'Login',
-                          _formatDate(login['login_time'] ?? ''),
-                        ),
-                      ),
-                ]),
-              ],
+                  ],
+                ),
+              ),
 
               const SizedBox(height: 24),
 
@@ -463,52 +552,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 color: Colors.black87,
                 fontWeight: FontWeight.w600,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _progressRow(String label, double current, double max) {
-    double percentage = max > 0 ? (current / max).clamp(0.0, 1.0) : 0.0;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Text(
-                '${current.toStringAsFixed(1)}h / ${max.toStringAsFixed(0)}h',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: percentage,
-            backgroundColor: Colors.grey[300],
-            valueColor: AlwaysStoppedAnimation<Color>(
-              percentage < 0.7
-                  ? Colors.green
-                  : percentage < 0.9
-                  ? Colors.orange
-                  : Colors.red,
             ),
           ),
         ],

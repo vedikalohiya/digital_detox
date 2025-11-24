@@ -225,7 +225,6 @@ class _HealthCardState extends State<_HealthCard>
   }
 }
 
-// ============ QUICK TIPS PAGE ============
 class QuickTipsPage extends StatelessWidget {
   const QuickTipsPage({super.key});
 
@@ -578,7 +577,6 @@ class _TipCardState extends State<_TipCard>
   }
 }
 
-// ============ SLEEP SCHEDULE PAGE ============
 class SleepSchedulePage extends StatefulWidget {
   const SleepSchedulePage({super.key});
 
@@ -695,7 +693,7 @@ class _SleepSchedulePageState extends State<SleepSchedulePage> {
     int hours = duration ~/ 60;
     int minutes = duration % 60;
 
-    return "$hours hours ${minutes} minutes";
+    return "$hours hours $minutes minutes";
   }
 
   @override
@@ -808,7 +806,6 @@ class _SleepSchedulePageState extends State<SleepSchedulePage> {
               ),
               const SizedBox(height: 20),
 
-              // Log Sleep Quality
               Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
@@ -857,7 +854,6 @@ class _SleepSchedulePageState extends State<SleepSchedulePage> {
                 ),
               ),
 
-              // Recent Sleep Logs
               if (sleepLogs.isNotEmpty) ...[
                 const SizedBox(height: 20),
                 Card(
@@ -1080,12 +1076,15 @@ class _EatingSchedulePageState extends State<EatingSchedulePage> {
 
   Future<void> _selectMealTime(String meal) async {
     TimeOfDay? initialTime;
-    if (meal == 'Breakfast')
+    if (meal == 'Breakfast') {
       initialTime = breakfastTime ?? const TimeOfDay(hour: 8, minute: 0);
-    if (meal == 'Lunch')
+    }
+    if (meal == 'Lunch') {
       initialTime = lunchTime ?? const TimeOfDay(hour: 13, minute: 0);
-    if (meal == 'Dinner')
+    }
+    if (meal == 'Dinner') {
       initialTime = dinnerTime ?? const TimeOfDay(hour: 19, minute: 0);
+    }
 
     final TimeOfDay? picked = await showTimePicker(
       context: context,

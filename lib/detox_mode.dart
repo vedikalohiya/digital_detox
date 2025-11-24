@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'detox_timer_service.dart';
+import 'blocking_screen.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
@@ -143,6 +144,8 @@ class _DetoxModePageState extends State<DetoxModePage> {
           if (isBlocked) {
             app.isActive = false;
             app.remainingMinutes = null;
+            // Show blocking screen
+            _showBlockingScreen(app);
           }
         });
       }
@@ -157,6 +160,62 @@ class _DetoxModePageState extends State<DetoxModePage> {
         points = prefs.getInt('detoxPoints') ?? 0;
       });
     }
+  }
+
+  void _showBlockingScreen(AppLimit app) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlockingScreen(
+          appName: app.name,
+          appIcon: app.icon,
+          blockDurationMinutes: 15,
+          onAccept: () async {
+            // Award points for accepting
+            final prefs = await SharedPreferences.getInstance();
+            final currentPoints = prefs.getInt('detoxPoints') ?? 0;
+            await prefs.setInt('detoxPoints', currentPoints + 10);
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('✅ Good choice! +10 points'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+            await _updateRemainingTimes();
+          },
+          onBreakLimit: () async {
+            // Penalize for breaking limit
+            final prefs = await SharedPreferences.getInstance();
+            final currentPoints = prefs.getInt('detoxPoints') ?? 0;
+            await prefs.setInt('detoxPoints', currentPoints - 20);
+            await prefs.setInt('currentStreak', 0);
+
+            // Remove block
+            await _timerService.stopTimer(app.name);
+            final blockedAppsStr = prefs.getString('blockedApps') ?? '{}';
+            final Map<String, dynamic> blockedApps = json.decode(
+              blockedAppsStr,
+            );
+            blockedApps.remove(app.name);
+            await prefs.setString('blockedApps', json.encode(blockedApps));
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('⚠️ Limit broken. -20 points, streak reset'),
+                  backgroundColor: Colors.orange,
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            }
+            await _updateRemainingTimes();
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> _saveData() async {

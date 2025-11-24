@@ -13,7 +13,6 @@ class DetoxTimerService {
   Timer? _backgroundTimer;
   bool _isInitialized = false;
 
-  // Initialize notifications
   Future<void> initialize() async {
     if (_isInitialized) return;
 
@@ -26,11 +25,9 @@ class DetoxTimerService {
 
     _isInitialized = true;
 
-    // Start background timer that checks every 30 seconds
     _startBackgroundTimer();
   }
 
-  // Start background timer
   void _startBackgroundTimer() {
     _backgroundTimer?.cancel();
     _backgroundTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
@@ -38,7 +35,6 @@ class DetoxTimerService {
     });
   }
 
-  // Check all active timers
   Future<void> _checkAllTimers() async {
     final prefs = await SharedPreferences.getInstance();
     final activeTimersStr = prefs.getString('activeTimers');
@@ -57,14 +53,12 @@ class DetoxTimerService {
       final elapsedMinutes = ((now - startTime) / 60000).floor();
       final remainingMinutes = limitMinutes - elapsedMinutes;
 
-      // Send notification 5 minutes before time is up
       if (remainingMinutes <= 5 && remainingMinutes > 0 && !notificationSent) {
         await _showWarningNotification(appName, remainingMinutes);
         activeTimers[appName]['notificationSent'] = true;
         needsSave = true;
       }
 
-      // Soft block when time is up
       if (remainingMinutes <= 0) {
         await _softBlockApp(appName);
         activeTimers.remove(appName);
@@ -77,7 +71,6 @@ class DetoxTimerService {
     }
   }
 
-  // Start timer for an app
   Future<void> startTimer(String appName, int limitMinutes) async {
     final prefs = await SharedPreferences.getInstance();
     final activeTimersStr = prefs.getString('activeTimers') ?? '{}';
@@ -91,11 +84,9 @@ class DetoxTimerService {
 
     await prefs.setString('activeTimers', json.encode(activeTimers));
 
-    // Show start notification
     await _showStartNotification(appName, limitMinutes);
   }
 
-  // Stop timer for an app
   Future<void> stopTimer(String appName) async {
     final prefs = await SharedPreferences.getInstance();
     final activeTimersStr = prefs.getString('activeTimers') ?? '{}';
@@ -105,7 +96,6 @@ class DetoxTimerService {
     await prefs.setString('activeTimers', json.encode(activeTimers));
   }
 
-  // Get remaining time for an app
   Future<int?> getRemainingMinutes(String appName) async {
     final prefs = await SharedPreferences.getInstance();
     final activeTimersStr = prefs.getString('activeTimers');
@@ -125,7 +115,6 @@ class DetoxTimerService {
     return limitMinutes - elapsedMinutes;
   }
 
-  // Check if app is currently blocked
   Future<bool> isAppBlocked(String appName) async {
     final prefs = await SharedPreferences.getInstance();
     final blockedAppsStr = prefs.getString('blockedApps') ?? '{}';
@@ -135,19 +124,17 @@ class DetoxTimerService {
     if (blockTime == null) return false;
 
     final now = DateTime.now().millisecondsSinceEpoch;
-    final blockDuration = 15 * 60 * 1000; // 15 minutes soft block
+    final blockDuration = 15 * 60 * 1000; 
 
     if (now - blockTime < blockDuration) {
       return true;
     } else {
-      // Block expired, remove it
       blockedApps.remove(appName);
       await prefs.setString('blockedApps', json.encode(blockedApps));
       return false;
     }
   }
 
-  // Show start notification
   Future<void> _showStartNotification(String appName, int minutes) async {
     const androidDetails = AndroidNotificationDetails(
       'detox_timer',
@@ -166,7 +153,6 @@ class DetoxTimerService {
     );
   }
 
-  // Show warning notification
   Future<void> _showWarningNotification(
     String appName,
     int remainingMinutes,
@@ -190,7 +176,6 @@ class DetoxTimerService {
     );
   }
 
-  // Soft block app
   Future<void> _softBlockApp(String appName) async {
     final prefs = await SharedPreferences.getInstance();
     final blockedAppsStr = prefs.getString('blockedApps') ?? '{}';
@@ -199,7 +184,6 @@ class DetoxTimerService {
     blockedApps[appName] = DateTime.now().millisecondsSinceEpoch;
     await prefs.setString('blockedApps', json.encode(blockedApps));
 
-    // Show block notification
     const androidDetails = AndroidNotificationDetails(
       'detox_block',
       'Detox Block',
@@ -217,12 +201,9 @@ class DetoxTimerService {
       'Time limit reached. Soft blocked for 15 minutes.',
       details,
     );
-
-    // Update points and stats
     await _updateStats(false);
   }
 
-  // Update stats
   Future<void> _updateStats(bool success) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -238,7 +219,6 @@ class DetoxTimerService {
     await prefs.setInt('totalBlockedToday', blocked + 1);
   }
 
-  // Cleanup
   void dispose() {
     _backgroundTimer?.cancel();
   }

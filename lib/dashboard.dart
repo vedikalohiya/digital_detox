@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_page_new.dart';
 import 'about_us.dart';
 import 'contact_us.dart';
 import 'mental_health_tools.dart';
 import 'detox_buddy.dart';
 import 'healthy_life_support.dart';
-import 'detox_mode.dart';
+import 'detox_mode_new.dart';
+import 'login.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);
@@ -103,7 +105,17 @@ class DashboardPage extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
-              onTap: () => Navigator.pop(context),
+              onTap: () async {
+                Navigator.pop(context); // Close drawer first
+                await FirebaseAuth.instance.signOut();
+                if (context.mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    (route) => false,
+                  );
+                }
+              },
             ),
           ],
         ),
@@ -125,7 +137,7 @@ class DashboardPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const DetoxModePage(),
+                      builder: (context) => const DetoxModeNewPage(),
                     ),
                   );
                 },
