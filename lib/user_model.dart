@@ -1,5 +1,8 @@
 // lib/user_model.dart
 
+// Enum for user zones (Kids or Adult)
+enum UserZone { kids, adult }
+
 class UserProfile {
   final String fullName;
   final String phoneNumber;

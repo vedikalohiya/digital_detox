@@ -75,7 +75,7 @@ class FirestoreService {
                 'appName': appName,
                 'packageName': packageName,
                 'usageMinutes': usageMinutes,
-                'recordedAt': FieldValue.serverTimestamp(),
+                'recordedAt': Timestamp.fromDate(DateTime.now()),
               },
             ]),
           }, SetOptions(merge: true));
@@ -283,7 +283,7 @@ class FirestoreService {
               {
                 'habitName': habitName,
                 'completed': completed,
-                'timestamp': FieldValue.serverTimestamp(),
+                'timestamp': Timestamp.fromDate(DateTime.now()),
               },
             ]),
             'date': Timestamp.fromDate(date),

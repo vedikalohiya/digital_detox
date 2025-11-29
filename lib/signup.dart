@@ -315,18 +315,22 @@ class _SignupPageState extends State<SignupPage> {
       // Close loading dialog
       if (mounted) Navigator.pop(context);
 
-      // Show success message and navigate directly to dashboard (user is already logged in)
+      // Show success message and navigate to login page
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Registration successful! Welcome to Digital Detox!'),
+            content: Text(
+              'Registration successful! Please log in to continue.',
+            ),
             backgroundColor: kPrimaryColor,
           ),
         );
-        // User is already authenticated by Firebase, so go directly to Dashboard
+        // Sign out the user so they have to login again (as per user requirement)
+        await FirebaseAuth.instance.signOut();
+        // Navigate to login page
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const DashboardPage()),
+          MaterialPageRoute(builder: (context) => const LoginPage()),
           (route) => false,
         );
       }

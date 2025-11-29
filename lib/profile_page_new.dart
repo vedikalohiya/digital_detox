@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'landing_page.dart';
 import 'login.dart';
 import 'firestore_service.dart';
 import 'database_helper.dart';
@@ -253,14 +255,19 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _logout() async {
     try {
+      // Clear mode selection so user can choose again
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('mode_selected');
+      await prefs.remove('selected_mode');
+
       // Logout from Firebase
       await FirebaseAuth.instance.signOut();
 
-      // Navigate to login page (StreamBuilder in main.dart will handle redirect)
+      // Navigate to landing page to show animations and allow mode selection
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
+          MaterialPageRoute(builder: (context) => const LandingPage()),
           (route) => false,
         );
       }

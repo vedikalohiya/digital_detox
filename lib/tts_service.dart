@@ -1,4 +1,4 @@
-import 'package:flutter_tts/flutter_tts.dart';
+// TTS Service - Disabled (flutter_tts package removed)
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TTSService {
@@ -6,7 +6,6 @@ class TTSService {
   factory TTSService() => _instance;
   TTSService._internal();
 
-  late FlutterTts _flutterTts;
   bool _isInitialized = false;
 
   // Voice settings
@@ -16,34 +15,10 @@ class TTSService {
   double _pitch = 1.0;
   String _language = 'en-US';
 
-  // Initialize TTS
+  // Initialize TTS (disabled)
   Future<void> initialize() async {
     if (_isInitialized) return;
-
-    _flutterTts = FlutterTts();
-
-    // Load saved settings
     await _loadSettings();
-
-    // Configure TTS
-    await _flutterTts.setLanguage(_language);
-    await _flutterTts.setSpeechRate(_speechRate);
-    await _flutterTts.setVolume(_volume);
-    await _flutterTts.setPitch(_pitch);
-
-    // Set up handlers
-    _flutterTts.setStartHandler(() {
-      // Debug: TTS Started
-    });
-
-    _flutterTts.setCompletionHandler(() {
-      // Debug: TTS Completed
-    });
-
-    _flutterTts.setErrorHandler((msg) {
-      // Debug: TTS Error occurred
-    });
-
     _isInitialized = true;
   }
 
@@ -67,28 +42,23 @@ class TTSService {
     await prefs.setString('voice_language', _language);
   }
 
-  // Speak text
+  // Speak text (disabled - no actual speech)
   Future<void> speak(String text) async {
     if (!_isInitialized) await initialize();
     if (!_isVoiceEnabled) return;
-
-    try {
-      await _flutterTts.speak(text);
-    } catch (e) {
-      // Debug: TTS Error in speak method
-    }
+    // TTS disabled - no speech output
   }
 
-  // Stop speaking
+  // Stop speaking (disabled)
   Future<void> stop() async {
     if (!_isInitialized) return;
-    await _flutterTts.stop();
+    // TTS disabled - no action needed
   }
 
-  // Pause speaking
+  // Pause speaking (disabled)
   Future<void> pause() async {
     if (!_isInitialized) return;
-    await _flutterTts.pause();
+    // TTS disabled - no action needed
   }
 
   // Getters
@@ -106,78 +76,42 @@ class TTSService {
 
   Future<void> setSpeechRate(double rate) async {
     _speechRate = rate;
-    if (_isInitialized) {
-      await _flutterTts.setSpeechRate(_speechRate);
-    }
     await _saveSettings();
   }
 
   Future<void> setVolume(double volume) async {
     _volume = volume;
-    if (_isInitialized) {
-      await _flutterTts.setVolume(_volume);
-    }
     await _saveSettings();
   }
 
   Future<void> setPitch(double pitch) async {
     _pitch = pitch;
-    if (_isInitialized) {
-      await _flutterTts.setPitch(_pitch);
-    }
     await _saveSettings();
   }
 
   Future<void> setLanguage(String language) async {
     _language = language;
-    if (_isInitialized) {
-      await _flutterTts.setLanguage(_language);
-    }
     await _saveSettings();
   }
 
-  // Meditation-specific voice instructions
+  // Meditation-specific voice instructions (disabled - no actual speech)
   Future<void> speakBreathingInstruction(
     String pattern,
     String phase,
     int duration,
   ) async {
-    String instruction = "";
-
-    switch (phase) {
-      case 'inhale':
-        instruction = "Breathe in slowly";
-        break;
-      case 'hold':
-        instruction = "Hold your breath";
-        break;
-      case 'exhale':
-        instruction = "Breathe out gently";
-        break;
-      case 'pause':
-        instruction = "Rest and relax";
-        break;
-      case 'start':
-        instruction =
-            "Let's begin your $pattern meditation. Find a comfortable position and close your eyes.";
-        break;
-      case 'end':
-        instruction =
-            "Great work! You've completed your meditation session. Take a moment to notice how you feel.";
-        break;
-    }
-
-    await speak(instruction);
+    // TTS disabled - no speech output
+    // This method exists for compatibility but does nothing
   }
 
-  // Get available voices/languages
+  // Get available voices/languages (disabled)
   Future<List<dynamic>> getLanguages() async {
     if (!_isInitialized) await initialize();
-    return await _flutterTts.getLanguages;
+    return []; // TTS disabled - no languages available
   }
 
-  // Cleanup
+  // Cleanup (disabled)
   void dispose() {
-    _flutterTts.stop();
+    // TTS disabled - no cleanup needed
   }
 }

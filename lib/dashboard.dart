@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'profile_page_new.dart';
 import 'about_us.dart';
 import 'contact_us.dart';
@@ -7,6 +8,7 @@ import 'mental_health_tools.dart';
 import 'detox_buddy.dart';
 import 'healthy_life_support.dart';
 import 'detox_mode_new.dart';
+import 'landing_page.dart';
 import 'login.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
@@ -107,11 +109,19 @@ class DashboardPage extends StatelessWidget {
               title: const Text('Logout'),
               onTap: () async {
                 Navigator.pop(context); // Close drawer first
+
+                // Clear mode selection so user can choose again
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove('mode_selected');
+                await prefs.remove('selected_mode');
+
                 await FirebaseAuth.instance.signOut();
                 if (context.mounted) {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    MaterialPageRoute(
+                      builder: (context) => const LandingPage(),
+                    ),
                     (route) => false,
                   );
                 }
