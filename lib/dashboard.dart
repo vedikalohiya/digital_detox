@@ -9,7 +9,6 @@ import 'detox_buddy.dart';
 import 'healthy_life_support.dart';
 import 'detox_mode_new.dart';
 import 'landing_page.dart';
-import 'login.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);

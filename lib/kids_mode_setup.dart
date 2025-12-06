@@ -30,14 +30,8 @@ class _KidsModeSetupState extends State<KidsModeSetup> {
   @override
   void initState() {
     super.initState();
-    _checkPinStatus();
-  }
-
-  Future<void> _checkPinStatus() async {
-    final isPinSet = await _pinService.isPinSet();
-    setState(() {
-      _pinSet = isPinSet;
-    });
+    // Always start with PIN setup screen - don't auto-skip
+    // This ensures parents consciously set/verify PIN each session
   }
 
   @override
@@ -73,20 +67,26 @@ class _KidsModeSetupState extends State<KidsModeSetup> {
       return;
     }
 
-    // Save PIN
-    final success = await _pinService.setPin(pin);
+    // Check if PIN already exists - if yes, verify it matches
+    final isPinAlreadySet = await _pinService.isPinSet();
 
-    if (success) {
-      // Provide clear feedback about where the PIN was saved
-      final user = FirebaseAuth.instance.currentUser;
-      final savedLocation = (user != null)
-          ? 'Firebase and local backup'
-          : 'Local backup only (not signed in)';
+    if (isPinAlreadySet) {
+      // Verify the entered PIN matches the stored PIN
+      final isCorrect = await _pinService.verifyPin(pin);
 
+      if (!isCorrect) {
+        setState(() {
+          _errorMessage = 'Incorrect PIN. Please enter your existing PIN.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // PIN verified - proceed to timer
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('PIN saved: $savedLocation')));
+        ).showSnackBar(SnackBar(content: Text('PIN verified ✓')));
       }
 
       setState(() {
@@ -94,10 +94,31 @@ class _KidsModeSetupState extends State<KidsModeSetup> {
         _isLoading = false;
       });
     } else {
-      setState(() {
-        _errorMessage = 'Failed to set PIN';
-        _isLoading = false;
-      });
+      // No PIN exists - save new PIN
+      final success = await _pinService.setPin(pin);
+
+      if (success) {
+        final user = FirebaseAuth.instance.currentUser;
+        final savedLocation = (user != null)
+            ? 'Firebase and local backup'
+            : 'Local backup only (not signed in)';
+
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('PIN saved: $savedLocation')));
+        }
+
+        setState(() {
+          _pinSet = true;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to set PIN';
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -114,11 +135,13 @@ class _KidsModeSetupState extends State<KidsModeSetup> {
       _requestOverlayPermissionInBackground();
 
       print('✅ Kids Mode started for $_selectedMinutes minutes');
-      print('📱 User can continue their activities');
+      print('📱 Navigating to Kids Dashboard');
 
-      // Close all setup screens and return to wherever user came from
+      // Navigate directly to Kids Dashboard to show timer immediately
       if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const KidsModeDashboard()),
+        );
       }
     } else {
       setState(() {

@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login.dart';
 import 'user_model.dart';
 import 'database_helper.dart';
-import 'dashboard.dart';
 
 const Color kPrimaryColor = Color(0xFF2E9D8A);
 const Color kBackgroundColor = Color(0xFFF5F5DC);

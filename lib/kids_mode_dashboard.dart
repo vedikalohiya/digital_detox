@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'kids_mode_service.dart';
 import 'kids_blocking_screen.dart';
 
@@ -36,6 +35,14 @@ class _KidsModeDashboardState extends State<KidsModeDashboard>
 
     // Listen for state changes
     _kidsModeService.addListener(_onKidsModeUpdate);
+
+    // Check if timer is already expired when dashboard loads
+    // This handles the case where timer expired while app was closed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_kidsModeService.isExpired) {
+        _showBlockingScreen();
+      }
+    });
   }
 
   void _onKidsModeUpdate() {
@@ -84,9 +91,11 @@ class _KidsModeDashboardState extends State<KidsModeDashboard>
           ),
         ),
         child: SafeArea(
-          child: _kidsModeService.isActive
-              ? _buildActiveTimerUI()
-              : _buildInactiveUI(),
+          child: Center(
+            child: _kidsModeService.isActive
+                ? _buildActiveTimerUI()
+                : _buildInactiveUI(),
+          ),
         ),
       ),
     );
@@ -110,45 +119,20 @@ class _KidsModeDashboardState extends State<KidsModeDashboard>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Happy animation
-        Lottie.asset(
-          'assets/animations/kids_playing.json',
-          width: 200,
-          height: 200,
-          controller: _animController,
-          onLoaded: (composition) {
-            _animController.duration = composition.duration;
-          },
-        ),
-
-        SizedBox(height: 30),
-
-        // Main timer display
-        Text(
-          '⏱️ Time Remaining',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.purple.shade700,
-          ),
-        ),
-
-        SizedBox(height: 20),
-
         // Large circular timer
         Container(
-          width: 250,
-          height: 250,
+          width: 220,
+          height: 220,
           child: Stack(
             alignment: Alignment.center,
             children: [
               // Progress circle
               SizedBox(
-                width: 250,
-                height: 250,
+                width: 220,
+                height: 220,
                 child: CircularProgressIndicator(
                   value: progress,
-                  strokeWidth: 15,
+                  strokeWidth: 12,
                   backgroundColor: Colors.grey.shade300,
                   valueColor: AlwaysStoppedAnimation<Color>(timerColor),
                 ),
@@ -161,7 +145,7 @@ class _KidsModeDashboardState extends State<KidsModeDashboard>
                   Text(
                     _kidsModeService.remainingTimeFormatted,
                     style: TextStyle(
-                      fontSize: 56,
+                      fontSize: 48,
                       fontWeight: FontWeight.bold,
                       color: timerColor,
                       fontFamily: 'monospace',
@@ -169,7 +153,7 @@ class _KidsModeDashboardState extends State<KidsModeDashboard>
                   ),
                   Text(
                     'minutes left',
-                    style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                   ),
                 ],
               ),
@@ -177,12 +161,12 @@ class _KidsModeDashboardState extends State<KidsModeDashboard>
           ),
         ),
 
-        SizedBox(height: 40),
+        SizedBox(height: 30),
 
         // Encouraging message
         Container(
           margin: EdgeInsets.symmetric(horizontal: 30),
-          padding: EdgeInsets.all(20),
+          padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.8),
             borderRadius: BorderRadius.circular(20),
@@ -198,14 +182,14 @@ class _KidsModeDashboardState extends State<KidsModeDashboard>
             children: [
               Icon(
                 remainingSeconds < 300 ? Icons.timer_outlined : Icons.thumb_up,
-                size: 40,
+                size: 32,
                 color: timerColor,
               ),
-              SizedBox(height: 10),
+              SizedBox(height: 8),
               Text(
                 _getEncouragingMessage(remainingSeconds),
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.purple.shade700,
                 ),
@@ -215,7 +199,7 @@ class _KidsModeDashboardState extends State<KidsModeDashboard>
           ),
         ),
 
-        SizedBox(height: 30),
+        SizedBox(height: 20),
 
         // Fun stats
         Row(

@@ -59,154 +59,77 @@ class _ZoneSelectorPageState extends State<ZoneSelectorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: kPrimaryColor),
-              )
-            : Padding(
+      backgroundColor: kBackgroundColor,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: kPrimaryColor))
+          : Center(
+              child: Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('👋', style: TextStyle(fontSize: 60)),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Welcome!',
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: kPrimaryColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Choose Your Zone',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 60),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _ZoneCircle(
-                          emoji: '🎨',
-                          label: 'Kids\nZone',
-                          color: Colors.orange,
-                          onTap: () => _selectZone(UserZone.kids),
-                        ),
-
-                        _ZoneCircle(
-                          emoji: '💼',
-                          label: 'Adult\nZone',
-                          color: kPrimaryColor,
-                          onTap: () => _selectZone(UserZone.adult),
-                        ),
+                    // Kids Zone Card
+                    _buildZoneCard(
+                      context: context,
+                      emoji: '🎨',
+                      color: Colors.orange,
+                      gradient: [
+                        Colors.orange.shade400,
+                        Colors.orange.shade600,
                       ],
+                      onTap: () => _selectZone(UserZone.kids),
                     ),
 
-                    const SizedBox(height: 60),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'Tap on a circle to select your zone\nYou can change it anytime from settings',
-                        style: TextStyle(fontSize: 14, color: Colors.black54),
-                        textAlign: TextAlign.center,
-                      ),
+                    const SizedBox(height: 40),
+
+                    // Adult Zone Card
+                    _buildZoneCard(
+                      context: context,
+                      emoji: '💼',
+                      color: kPrimaryColor,
+                      gradient: [
+                        const Color(0xFF2E9D8A),
+                        const Color(0xFF1F7A6A),
+                      ],
+                      onTap: () => _selectZone(UserZone.adult),
                     ),
                   ],
                 ),
               ),
-      ),
+            ),
     );
   }
-}
 
-class _ZoneCircle extends StatefulWidget {
-  final String emoji;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ZoneCircle({
-    required this.emoji,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  State<_ZoneCircle> createState() => _ZoneCircleState();
-}
-
-class _ZoneCircleState extends State<_ZoneCircle> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: Column(
-          children: [
-            Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: widget.color,
-                boxShadow: [
-                  BoxShadow(
-                    color: widget.color.withOpacity(0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: widget.onTap,
-                  customBorder: const CircleBorder(),
-                  child: Center(
-                    child: Text(
-                      widget.emoji,
-                      style: const TextStyle(fontSize: 70),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              widget.label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: widget.color,
-                height: 1.2,
-              ),
+  Widget _buildZoneCard({
+    required BuildContext context,
+    required String emoji,
+    required Color color,
+    required List<Color> gradient,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        width: 200,
+        height: 200,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: gradient,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.4),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
+        ),
+        child: Center(
+          child: Text(emoji, style: const TextStyle(fontSize: 100)),
         ),
       ),
     );

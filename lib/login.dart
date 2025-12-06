@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'signup.dart';
-import 'dashboard.dart';
 import 'database_helper.dart';
 import 'forgot_password_page.dart';
 import 'mode_selector.dart';
-import 'kids_mode_dashboard.dart';
-import 'kids_mode_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -93,44 +89,11 @@ class _LoginPageState extends State<LoginPage> {
 
         if (loginSuccessful) {
           if (mounted) {
-            // Check if user has selected a mode
-            final prefs = await SharedPreferences.getInstance();
-            final hasSelectedMode = prefs.getBool('mode_selected') ?? false;
-            final selectedMode = prefs.getString('selected_mode');
-
-            if (!hasSelectedMode || selectedMode == null) {
-              // First time login - show mode selector
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const ModeSelector()),
-              );
-            } else if (selectedMode == 'adult') {
-              // Adult mode - go to dashboard
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const DashboardPage()),
-              );
-            } else if (selectedMode == 'kids') {
-              // Kids mode - check if timer is active
-              final kidsService = KidsModeService();
-              await kidsService.initialize();
-
-              if (kidsService.isActive && kidsService.remainingSeconds > 0) {
-                // Timer active - show kids dashboard
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const KidsModeDashboard(),
-                  ),
-                );
-              } else {
-                // No timer - show mode selector to set up
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ModeSelector()),
-                );
-              }
-            }
+            // Always show mode selector after login
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const ModeSelector()),
+            );
           }
         } else {
           if (mounted) {

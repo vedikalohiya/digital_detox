@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'kids_overlay_service.dart';
 
 /// Service for managing Kids Mode timer and state
@@ -17,7 +18,6 @@ class KidsModeService extends ChangeNotifier {
   static const String _isActiveKey = 'kids_mode_active';
   static const String _totalMinutesKey = 'kids_mode_total_minutes';
   static const String _remainingSecondsKey = 'kids_mode_remaining_seconds';
-  static const String _startTimeKey = 'kids_mode_start_time';
   static const String _expiryTimeKey = 'kids_mode_expiry_time';
 
   // State
@@ -69,20 +69,38 @@ class KidsModeService extends ChangeNotifier {
   Future<void> initialize() async {
     await _loadState();
 
+    // Check if user unlocked from overlay
+    final prefs = await SharedPreferences.getInstance();
+    final wasUnlocked = prefs.getBool('kids_mode_unlocked') ?? false;
+    if (wasUnlocked) {
+      print('🔓 Kids Mode was unlocked from overlay - stopping');
+      await prefs.remove('kids_mode_unlocked');
+      await stopKidsMode();
+      return;
+    }
+
     if (_isActive && _expiryTime != null) {
       final now = DateTime.now();
 
       if (now.isBefore(_expiryTime!)) {
-        // Timer still running - calculate remaining time
+        // Timer still running - calculate remaining time based on expiry time
+        // This ensures accurate timing even if app was closed/backgrounded
         _remainingSeconds = _expiryTime!.difference(now).inSeconds;
         _startCountdown();
         print('✅ Kids Mode restored: $_remainingSeconds seconds remaining');
+        print('📅 Expiry time: $_expiryTime');
       } else {
-        // Timer expired while app was closed
+        // Timer expired while app was closed/backgrounded
+        // Show blocking overlay immediately
+        print('⏰ Kids Mode timer expired while app was closed');
         _remainingSeconds = 0;
-        await _saveState();
-        _triggerExpiry();
-        print('⏰ Kids Mode timer expired (while app was closed)');
+
+        // Show overlay since timer actually expired
+        _overlayService ??= KidsOverlayService();
+        await _overlayService!.showBlockingOverlay();
+
+        onTimerExpired?.call();
+        notifyListeners();
       }
     }
   }
@@ -108,6 +126,7 @@ class KidsModeService extends ChangeNotifier {
 
   /// Stop Kids Mode (requires parent PIN verification before calling)
   Future<void> stopKidsMode() async {
+    print('⏹️ Stopping Kids Mode...');
     _isActive = false;
     _remainingSeconds = 0;
     _totalMinutes = 0;
@@ -117,7 +136,16 @@ class KidsModeService extends ChangeNotifier {
 
     await _saveState();
 
-    print('⏹️ Kids Mode stopped');
+    // Close the overlay if it's showing
+    print('🚪 Attempting to close overlay from stopKidsMode...');
+    try {
+      await FlutterOverlayWindow.closeOverlay();
+      print('✅ Overlay closed successfully');
+    } catch (e) {
+      print('⚠️ Error closing overlay: $e');
+    }
+
+    print('✅ Kids Mode stopped completely');
     notifyListeners();
   }
 
@@ -141,9 +169,19 @@ class KidsModeService extends ChangeNotifier {
     _countdownTimer?.cancel();
 
     _countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      // Recalculate based on expiry time to ensure accuracy
+      // even if app was suspended/backgrounded
+      if (_expiryTime != null) {
+        final now = DateTime.now();
+        _remainingSeconds = _expiryTime!.difference(now).inSeconds;
+
+        if (_remainingSeconds < 0) {
+          _remainingSeconds = 0;
+        }
+      }
+
       if (_remainingSeconds > 0) {
-        _remainingSeconds--;
-        _saveState(); // Persist every second
+        _saveState(); // Persist state
         onTimerTick?.call(_remainingSeconds);
         notifyListeners();
       } else {
@@ -153,15 +191,32 @@ class KidsModeService extends ChangeNotifier {
     });
   }
 
-  /// Trigger timer expiry
+  /// Trigger timer expiry (only called when timer naturally expires during countdown)
   void _triggerExpiry() async {
-    print('⏰ Kids Mode timer expired!');
+    print('🔥🔥🔥 Kids Mode timer expired! 🔥🔥🔥');
+    print('📊 _countdownTimer is null: ${_countdownTimer == null}');
+    print('📊 _isActive: $_isActive');
+    print('📊 _remainingSeconds: $_remainingSeconds');
 
-    // Show system-wide overlay
-    _overlayService ??= KidsOverlayService();
-    await _overlayService!.showBlockingOverlay();
+    // Always show overlay when timer expires during active countdown
+    if (_countdownTimer != null || _isActive) {
+      print('🚀 Attempting to show blocking overlay...');
 
-    onTimerExpired?.call();
+      // Show system-wide overlay
+      _overlayService ??= KidsOverlayService();
+
+      try {
+        await _overlayService!.showBlockingOverlay();
+        print('✅ Overlay shown successfully');
+      } catch (e) {
+        print('❌ Error showing overlay: $e');
+      }
+
+      onTimerExpired?.call();
+    } else {
+      print('⚠️ Timer expired but no active countdown - skipping overlay');
+    }
+
     notifyListeners();
   }
 

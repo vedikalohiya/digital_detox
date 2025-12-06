@@ -35,13 +35,10 @@ class _KidsBlockingScreenState extends State<KidsBlockingScreen>
       duration: Duration(seconds: 2),
     )..repeat(reverse: true);
 
-    // Play alarm for 30 seconds
-    _alarmService.playAlarm();
-
-    // Stop alarm after 30 seconds, then show PIN entry
-    Future.delayed(Duration(seconds: 30), () {
+    // Don't play alarm - just show visual alert
+    // Show PIN entry after 5 seconds
+    Future.delayed(Duration(seconds: 5), () {
       if (mounted) {
-        _alarmService.stopAlarm();
         setState(() {
           _alarmPlaying = false;
           _showPinEntry = true;
@@ -57,7 +54,6 @@ class _KidsBlockingScreenState extends State<KidsBlockingScreen>
   void dispose() {
     _pulseController.dispose();
     _pinController.dispose();
-    _alarmService.stopAlarm();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }

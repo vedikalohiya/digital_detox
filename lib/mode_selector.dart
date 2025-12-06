@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lottie/lottie.dart';
 import 'dashboard.dart';
 import 'kids_mode_setup.dart';
 import 'parent_pin_service.dart';
@@ -142,151 +143,141 @@ class _ModeSelectorState extends State<ModeSelector>
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF2E9D8A), Color(0xFF1A7A6A)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFF5F5DC), Color(0xFFFFE4B5), Color(0xFFFFF8DC)],
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              SizedBox(height: 40),
-
-              // App logo/title
-              Text(
-                '📱 Digital Detox',
-                style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-
-              SizedBox(height: 10),
-
-              Text(
-                'Choose Your Mode',
-                style: TextStyle(fontSize: 20, color: Colors.white70),
-              ),
-
-              Spacer(),
-
-              // Mode selection cards
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 40),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          child: Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 40),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Adult Mode Circle
-                    _buildModeCircle(
-                      title: 'Adult Mode',
-                      icon: Icons.person,
+                    // Title
+                    Text(
+                      'Choose Your Mode',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2E9D8A),
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    SizedBox(height: 60),
+
+                    // Kids Mode Card
+                    _buildModeCard(
+                      animationPath: 'assets/animations/Happy boy.json',
+                      label: 'Kids Mode',
+                      gradient: [
+                        Colors.orange.shade400,
+                        Colors.orange.shade700,
+                      ],
+                      onTap: _selectKidsMode,
+                    ),
+
+                    SizedBox(height: 50),
+
+                    // Adult Mode Card
+                    _buildModeCard(
+                      animationPath: 'assets/animations/Female avatar.json',
+                      label: 'Adult Mode',
                       gradient: [Color(0xFF2E9D8A), Color(0xFF1A7A6A)],
                       onTap: _selectAdultMode,
                     ),
-
-                    // Kids Mode Circle
-                    _buildModeCircle(
-                      title: 'Kids Mode',
-                      icon: Icons.child_care,
-                      gradient: [Color(0xFFFF9800), Color(0xFFE68900)],
-                      onTap: _selectKidsMode,
-                    ),
                   ],
                 ),
               ),
-
-              SizedBox(height: 40),
-
-              // Feature descriptions
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                child: Column(
-                  children: [
-                    Text(
-                      'Adult Mode: Full access to all features, track usage, mental health tools',
-                      style: TextStyle(color: Colors.white, fontSize: 14),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 15),
-                    Text(
-                      'Kids Mode: Parental controls, screen time limits, automatic blocking',
-                      style: TextStyle(color: Colors.white, fontSize: 14),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-
-              Spacer(),
-
-              // Info text
-              Padding(
-                padding: EdgeInsets.all(20),
-                child: Text(
-                  'You can switch modes anytime from settings',
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildModeCircle({
-    required String title,
-    required IconData icon,
+  Widget _buildModeCard({
+    required String animationPath,
+    required String label,
     required List<Color> gradient,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        children: [
-          // Circular button with gradient
-          Container(
-            width: 140,
-            height: 140,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: gradient,
+      child: Container(
+        width: 280,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: gradient[0].withOpacity(0.3),
+              blurRadius: 25,
+              spreadRadius: 1,
+              offset: Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(30),
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Animation
+                  Container(
+                    height: 200,
+                    width: 200,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: gradient,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(25),
+                      child: Lottie.asset(
+                        animationPath,
+                        fit: BoxFit.contain,
+                        repeat: true,
+                        errorBuilder: (context, error, stackTrace) {
+                          // Fallback to icon if animation fails
+                          return Icon(
+                            label == 'Kids Mode'
+                                ? Icons.child_care
+                                : Icons.person,
+                            size: 120,
+                            color: Colors.white,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20),
+
+                  // Label
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: gradient[1],
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: gradient[0].withOpacity(0.5),
-                  blurRadius: 20,
-                  offset: Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Icon(icon, size: 70, color: Colors.white),
-          ),
-
-          SizedBox(height: 20),
-
-          // Title
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              shadows: [
-                Shadow(
-                  color: Colors.black26,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

@@ -1,68 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
-import 'kids_mode_service.dart';
-import 'kids_alarm_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'parent_pin_service.dart';
 
-/// System-wide overlay service for Kids Mode blocking
-/// This shows the red blocking screen ON TOP OF ALL APPS
 class KidsOverlayService {
   static final KidsOverlayService _instance = KidsOverlayService._internal();
   factory KidsOverlayService() => _instance;
   KidsOverlayService._internal();
 
   bool _isOverlayActive = false;
+  bool get isActive => _isOverlayActive;
 
-  /// Check if overlay permission is granted
   Future<bool> hasOverlayPermission() async {
     try {
       return await FlutterOverlayWindow.isPermissionGranted();
     } catch (e) {
-      print('❌ Error checking overlay permission: $e');
       return false;
     }
   }
 
-  /// Request overlay permission from user
   Future<bool> requestOverlayPermission() async {
     try {
-      final hasPermission = await FlutterOverlayWindow.isPermissionGranted();
-
-      if (!hasPermission) {
-        final granted = await FlutterOverlayWindow.requestPermission();
-        return granted ?? false;
-      }
-
-      return true;
+      if (await FlutterOverlayWindow.isPermissionGranted()) return true;
+      return await FlutterOverlayWindow.requestPermission() ?? false;
     } catch (e) {
-      print('❌ Error requesting overlay permission: $e');
       return false;
     }
   }
 
-  /// Show system-wide blocking overlay
   Future<void> showBlockingOverlay() async {
-    if (_isOverlayActive) {
-      print('⚠️ Overlay already active');
-      return;
-    }
-
+    if (_isOverlayActive) return;
     try {
-      // Check permission with timeout to avoid hanging
       final hasPermission = await hasOverlayPermission().timeout(
         Duration(seconds: 2),
         onTimeout: () => false,
       );
+      if (!hasPermission && !await requestOverlayPermission()) return;
 
-      if (!hasPermission) {
-        print('⚠️ No overlay permission - will show notification instead');
-        // Could add a notification here as fallback
-        return;
-      }
-
-      // Show overlay window immediately
       await FlutterOverlayWindow.showOverlay(
-        enableDrag: false, // Cannot be dragged
+        enableDrag: false,
         overlayTitle: "Screen Time Over",
         overlayContent: "Time's up! Ask parent to unlock.",
         flag: OverlayFlag.focusPointer,
@@ -70,42 +46,17 @@ class KidsOverlayService {
         height: WindowSize.matchParent,
         width: WindowSize.matchParent,
       );
-
       _isOverlayActive = true;
-      print('✅ System blocking overlay shown');
-    } catch (e) {
-      print('❌ Error showing overlay: $e');
-    }
+    } catch (e) {}
   }
 
-  /// Close the overlay
   Future<void> closeOverlay() async {
-    if (!_isOverlayActive) {
-      return;
-    }
-
+    if (!_isOverlayActive) return;
     try {
       await FlutterOverlayWindow.closeOverlay();
       _isOverlayActive = false;
-      print('✅ Overlay closed');
-    } catch (e) {
-      print('❌ Error closing overlay: $e');
-    }
+    } catch (_) {}
   }
-
-  /// Update overlay content
-  Future<void> updateOverlay(String title, String content) async {
-    try {
-      await FlutterOverlayWindow.shareData({
-        'title': title,
-        'content': content,
-      });
-    } catch (e) {
-      print('❌ Error updating overlay: $e');
-    }
-  }
-
-  bool get isActive => _isOverlayActive;
 }
 
 /// Overlay entry point - This runs in a separate isolate
@@ -122,7 +73,7 @@ void overlayMain() {
 
 /// The actual blocking screen shown as system overlay
 class KidsOverlayBlockingScreen extends StatefulWidget {
-  const KidsOverlayBlockingScreen({Key? key}) : super(key: key);
+  const KidsOverlayBlockingScreen({super.key});
 
   @override
   State<KidsOverlayBlockingScreen> createState() =>
@@ -130,91 +81,27 @@ class KidsOverlayBlockingScreen extends StatefulWidget {
 }
 
 class _KidsOverlayBlockingScreenState extends State<KidsOverlayBlockingScreen>
-    with SingleTickerProviderStateMixin {
-  final ParentPinService _pinService = ParentPinService();
-  final KidsAlarmService _alarmService = KidsAlarmService();
-
-  final TextEditingController _pinController = TextEditingController();
-  bool _showPinEntry = false;
-  bool _pinError = false;
-  bool _alarmPlaying = true;
-  late AnimationController _pulseController;
-
-  Map<String, dynamic>? _overlayData;
+    with TickerProviderStateMixin {
+  final _pinService = ParentPinService();
+  final _pinController = TextEditingController();
+  bool _pinError = false, _alarmPlaying = true;
+  late AnimationController _pulseController, _flashController;
 
   @override
   void initState() {
     super.initState();
-
     _pulseController = AnimationController(
       vsync: this,
       duration: Duration(seconds: 2),
     )..repeat(reverse: true);
-
-    // Listen for data from main app
-    FlutterOverlayWindow.overlayListener.listen((data) {
-      print('📥 Overlay received data from main app: $data');
-
-      setState(() {
-        _overlayData = data;
-      });
-
-      // Handle verification result from main app
-      if (data['action'] == 'pin_verified') {
-        final bool isValid = data['is_valid'] ?? false;
-        print('✅ Received PIN verification result: $isValid');
-
-        if (isValid) {
-          print('✅ PIN correct - unlocking');
-          _alarmService.stopAlarm();
-          FlutterOverlayWindow.closeOverlay();
-        } else {
-          print('❌ PIN incorrect');
-          setState(() {
-            _pinError = true;
-            _pinController.clear();
-          });
-
-          Future.delayed(Duration(seconds: 2), () {
-            if (mounted) {
-              setState(() => _pinError = false);
-            }
-          });
-        }
-      } else if (data['action'] == 'time_added') {
-        final bool isValid = data['is_valid'] ?? false;
-        print('⏰ Received add time verification result: $isValid');
-
-        if (isValid) {
-          print('✅ Time added successfully');
-          _alarmService.stopAlarm();
-          FlutterOverlayWindow.closeOverlay();
-        } else {
-          print('❌ PIN incorrect for add time');
-          setState(() {
-            _pinError = true;
-            _pinController.clear();
-          });
-
-          Future.delayed(Duration(seconds: 2), () {
-            if (mounted) {
-              setState(() => _pinError = false);
-            }
-          });
-        }
-      }
-    });
-
-    // Play alarm for 30 seconds
-    _alarmService.playAlarm();
-
-    Future.delayed(Duration(seconds: 30), () {
+    _flashController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 300),
+    )..repeat(reverse: true);
+    Future.delayed(Duration(seconds: 8), () {
       if (mounted) {
-        _alarmService.stopAlarm();
-        setState(() {
-          _alarmPlaying = false;
-          _showPinEntry = true;
-        });
+        _flashController.duration = Duration(milliseconds: 800);
+        setState(() => _alarmPlaying = false);
       }
     });
   }
@@ -222,70 +109,75 @@ class _KidsOverlayBlockingScreenState extends State<KidsOverlayBlockingScreen>
   @override
   void dispose() {
     _pulseController.dispose();
+    _flashController.dispose();
     _pinController.dispose();
-    _alarmService.stopAlarm();
     super.dispose();
   }
 
   Future<void> _verifyPin() async {
     final pin = _pinController.text;
-
-    print('🔐 Attempting to verify PIN: ${pin.length} digits');
-
     if (pin.length != 4) {
-      print('❌ PIN length invalid');
       setState(() => _pinError = true);
       return;
     }
-
     setState(() => _pinError = false);
-
     try {
-      // Send PIN to main app for verification
-      // The overlay isolate can't access SharedPreferences/Firebase directly
-      print('📤 Sending PIN to main app for verification');
-      FlutterOverlayWindow.shareData({'action': 'verify_pin', 'pin': pin});
+      print('🔐 Verifying PIN in overlay...');
+      if (await _pinService.verifyPin(pin, isOverlay: true)) {
+        print('✅ PIN verified! Stopping Kids Mode...');
 
-      // Wait for response from main app
-      // The main app will send back verification result via overlayListener
-      print('⏳ Waiting for verification result from main app...');
-    } catch (e) {
-      print('❌ PIN verification error: $e');
-      setState(() {
-        _pinError = true;
+        // Signal main app to stop Kids Mode
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('kids_mode_unlocked', true);
+        await prefs.setBool('kids_mode_active', false);
+        await prefs.remove('kids_mode_remaining_seconds');
+        await prefs.remove('kids_mode_expiry_time');
+        print('✅ Kids Mode state cleared');
+
+        // Close overlay
+        await FlutterOverlayWindow.closeOverlay();
+        print('✅ Overlay closed successfully');
+      } else {
+        print('❌ PIN verification failed');
+        setState(() => _pinError = true);
         _pinController.clear();
-      });
+        Future.delayed(
+          Duration(seconds: 2),
+          () => mounted ? setState(() => _pinError = false) : null,
+        );
+      }
+    } catch (e) {
+      print('❌ Error during PIN verification: $e');
+      setState(() => _pinError = true);
+      _pinController.clear();
     }
   }
 
   Future<void> _addExtraTime() async {
     final pin = _pinController.text;
-
-    print('⏰ Attempting to add extra time with PIN: ${pin.length} digits');
-
     if (pin.length != 4) {
       setState(() => _pinError = true);
       return;
     }
-
     setState(() => _pinError = false);
-
     try {
-      // Send PIN to main app for verification and adding time
-      print('📤 Sending PIN to main app for add time verification');
-      FlutterOverlayWindow.shareData({
-        'action': 'verify_pin_add_time',
-        'pin': pin,
-        'minutes': 15,
-      });
-
-      print('⏳ Waiting for verification result from main app...');
-    } catch (e) {
-      print('❌ Add time error: $e');
-      setState(() {
-        _pinError = true;
+      print('🔐 Verifying PIN for add time...');
+      if (await _pinService.verifyPin(pin, isOverlay: true)) {
+        print('✅ PIN verified! Adding 15 minutes and closing overlay...');
+        // TODO: Add time functionality - for now just close overlay
+        await FlutterOverlayWindow.closeOverlay();
+        print('✅ Overlay closed successfully');
+      } else {
+        setState(() => _pinError = true);
         _pinController.clear();
-      });
+        Future.delayed(
+          Duration(seconds: 2),
+          () => mounted ? setState(() => _pinError = false) : null,
+        );
+      }
+    } catch (e) {
+      setState(() => _pinError = true);
+      _pinController.clear();
     }
   }
 
@@ -293,77 +185,82 @@ class _KidsOverlayBlockingScreenState extends State<KidsOverlayBlockingScreen>
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.red.shade900,
-              Colors.red.shade700,
-              Colors.red.shade900,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: _alarmPlaying ? _buildAlarmScreen() : _buildPinEntryScreen(),
-          ),
-        ),
+      child: AnimatedBuilder(
+        animation: _flashController,
+        builder: (context, child) {
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.red.shade900.withValues(
+                    alpha: 0.85 + (_flashController.value * 0.15),
+                  ),
+                  Colors.red.shade700.withValues(
+                    alpha: 0.85 + (_flashController.value * 0.15),
+                  ),
+                  Colors.red.shade900.withValues(
+                    alpha: 0.85 + (_flashController.value * 0.15),
+                  ),
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: Center(
+                child: _alarmPlaying
+                    ? _buildAlarmScreen()
+                    : _buildPinEntryScreen(),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildAlarmScreen() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        ScaleTransition(
-          scale: Tween(begin: 1.0, end: 1.2).animate(_pulseController),
-          child: Icon(Icons.alarm, size: 120, color: Colors.white),
+  Widget _buildAlarmScreen() => Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      ScaleTransition(
+        scale: Tween(begin: 1.0, end: 1.2).animate(_pulseController),
+        child: Icon(Icons.alarm, size: 120, color: Colors.white),
+      ),
+      SizedBox(height: 40),
+      Text(
+        '⏰ SCREEN TIME IS OVER!',
+        style: TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          letterSpacing: 2,
         ),
-
-        SizedBox(height: 40),
-
-        Text(
-          '⏰ SCREEN TIME IS OVER!',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            letterSpacing: 2,
-          ),
-          textAlign: TextAlign.center,
-        ),
-
-        SizedBox(height: 20),
-
-        Text(
-          'Time to take a break!',
-          style: TextStyle(fontSize: 24, color: Colors.white70),
-          textAlign: TextAlign.center,
-        ),
-
-        SizedBox(height: 40),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.volume_up, color: Colors.white, size: 32),
-            SizedBox(width: 10),
-            Text(
-              'ALARM PLAYING',
-              style: TextStyle(
-                fontSize: 20,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+        textAlign: TextAlign.center,
+      ),
+      SizedBox(height: 20),
+      Text(
+        'Time to take a break!',
+        style: TextStyle(fontSize: 24, color: Colors.white70),
+        textAlign: TextAlign.center,
+      ),
+      SizedBox(height: 40),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.volume_up, color: Colors.white, size: 32),
+          SizedBox(width: 10),
+          Text(
+            'ALARM PLAYING',
+            style: TextStyle(
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
-          ],
-        ),
-      ],
-    );
-  }
+          ),
+        ],
+      ),
+    ],
+  );
 
   Widget _buildPinEntryScreen() {
     return SingleChildScrollView(
@@ -405,7 +302,7 @@ class _KidsOverlayBlockingScreenState extends State<KidsOverlayBlockingScreen>
 
           SizedBox(height: 20),
 
-          Container(
+          SizedBox(
             width: 200,
             child: TextField(
               controller: _pinController,

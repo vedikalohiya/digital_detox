@@ -7,7 +7,6 @@ import 'detox_buddy.dart';
 import 'healthy_life_support.dart';
 import 'detox_mode_new.dart';
 import 'landing_page.dart';
-import 'login.dart';
 import 'zone_selector.dart';
 
 const Color kKidsPrimaryColor = Color(0xFFFF9800);

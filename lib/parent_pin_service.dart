@@ -109,44 +109,53 @@ class ParentPinService {
     return true;
   }
 
-  /// Verify parent PIN (checks Firebase first, then local backup)
-  Future<bool> verifyPin(String pin) async {
-    print('🔐 Verifying PIN: length=${pin.length}');
+  /// Verify parent PIN (checks local storage first when in overlay, Firebase otherwise)
+  Future<bool> verifyPin(String pin, {bool isOverlay = false}) async {
+    print('🔐 Verifying PIN: length=${pin.length}, isOverlay=$isOverlay');
 
     final inputHash = _hashPin(pin);
     print('🔐 Input PIN hashed: ${inputHash.substring(0, 10)}...');
     String? storedHash;
 
-    try {
-      // Try Firebase first
-      if (_currentUserId != null && _firestore != null) {
-        print('🔐 Checking Firebase for user: $_currentUserId');
-        final doc = await _firestore!
-            .collection('users')
-            .doc(_currentUserId)
-            .collection('settings')
-            .doc('parent_pin')
-            .get();
+    // In overlay, skip Firebase entirely and only use local storage
+    if (!isOverlay) {
+      try {
+        // Try Firebase first (only in main app)
+        if (_currentUserId != null && _firestore != null) {
+          print('🔐 Checking Firebase for user: $_currentUserId');
+          final doc = await _firestore!
+              .collection('users')
+              .doc(_currentUserId)
+              .collection('settings')
+              .doc('parent_pin')
+              .get();
 
-        if (doc.exists) {
-          storedHash = doc.data()?['pin_hash'];
-          print('🔐 PIN found in Firebase: ${storedHash?.substring(0, 10)}...');
+          if (doc.exists) {
+            storedHash = doc.data()?['pin_hash'];
+            print(
+              '🔐 PIN found in Firebase: ${storedHash?.substring(0, 10)}...',
+            );
 
-          // Sync to local storage for offline access
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString(_pinKey, storedHash!);
-          await prefs.setBool(_pinSetKey, true);
+            // Sync to local storage for offline access
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString(_pinKey, storedHash!);
+            await prefs.setBool(_pinSetKey, true);
+          } else {
+            print('⚠️ No PIN document found in Firebase');
+          }
         } else {
-          print('⚠️ No PIN document found in Firebase');
+          print('⚠️ No user logged in');
         }
-      } else {
-        print('⚠️ No user logged in');
+      } catch (e) {
+        print('⚠️ Firebase PIN verification failed, checking local: $e');
       }
-    } catch (e) {
-      print('⚠️ Firebase PIN verification failed, checking local: $e');
+    } else {
+      print(
+        '🔐 Running in overlay - skipping Firebase, using local storage only',
+      );
     }
 
-    // Fallback to local storage
+    // Fallback to local storage (or primary for overlay)
     if (storedHash == null) {
       print('🔐 Checking local storage for PIN');
       final prefs = await SharedPreferences.getInstance();
