@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'kids_mode_service.dart';
-import 'kids_blocking_screen.dart';
+import 'kids_pin_setup.dart';
+import 'kids_timer_selection.dart';
+import 'parent_pin_service.dart';
 
-/// Simplified dashboard for Kids Mode
-/// Shows large timer display and simple UI - no access to settings
+/// Main Kids Mode Dashboard
+/// Shows a single prominent container for setting timer
 class KidsModeDashboard extends StatefulWidget {
   const KidsModeDashboard({Key? key}) : super(key: key);
 
@@ -11,68 +12,42 @@ class KidsModeDashboard extends StatefulWidget {
   State<KidsModeDashboard> createState() => _KidsModeDashboardState();
 }
 
-class _KidsModeDashboardState extends State<KidsModeDashboard>
-    with SingleTickerProviderStateMixin {
-  final KidsModeService _kidsModeService = KidsModeService();
-  late AnimationController _animController;
+class _KidsModeDashboardState extends State<KidsModeDashboard> {
+  final ParentPinService _pinService = ParentPinService();
+  bool _isLoading = true;
+  bool _isPinSet = false;
 
   @override
   void initState() {
     super.initState();
+    _checkPinStatus();
+  }
 
-    _animController = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 3),
-    )..repeat();
-
-    // Initialize service
-    _kidsModeService.initialize();
-
-    // Listen for timer expiry
-    _kidsModeService.onTimerExpired = () {
-      _showBlockingScreen();
-    };
-
-    // Listen for state changes
-    _kidsModeService.addListener(_onKidsModeUpdate);
-
-    // Check if timer is already expired when dashboard loads
-    // This handles the case where timer expired while app was closed
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_kidsModeService.isExpired) {
-        _showBlockingScreen();
-      }
+  Future<void> _checkPinStatus() async {
+    final isPinSet = await _pinService.isPinSet();
+    setState(() {
+      _isPinSet = isPinSet;
+      _isLoading = false;
     });
   }
 
-  void _onKidsModeUpdate() {
-    if (mounted) {
-      setState(() {});
-
-      // Check if timer expired
-      if (_kidsModeService.isExpired) {
-        _showBlockingScreen();
-      }
-    }
-  }
-
-  void _showBlockingScreen() {
-    if (mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
+  void _onSetTimerTapped() {
+    if (!_isPinSet) {
+      // Navigate to PIN setup first
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (context) => const KidsPinSetup()))
+          .then((_) {
+            // Refresh PIN status after returning
+            _checkPinStatus();
+          });
+    } else {
+      // PIN already set - go directly to timer selection
+      Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => KidsBlockingScreen(),
-          fullscreenDialog: true,
+          builder: (context) => const KidsTimerSelection(),
         ),
-        (route) => false, // Remove all previous routes
       );
     }
-  }
-
-  @override
-  void dispose() {
-    _kidsModeService.removeListener(_onKidsModeUpdate);
-    _animController.dispose();
-    super.dispose();
   }
 
   @override
@@ -84,214 +59,201 @@ class _KidsModeDashboardState extends State<KidsModeDashboard>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.purple.shade100,
-              Colors.blue.shade100,
-              Colors.pink.shade100,
+              Colors.purple.shade300,
+              Colors.deepPurple.shade400,
+              Colors.indigo.shade500,
             ],
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: _kidsModeService.isActive
-                ? _buildActiveTimerUI()
-                : _buildInactiveUI(),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActiveTimerUI() {
-    final remainingSeconds = _kidsModeService.remainingSeconds;
-    final totalSeconds = _kidsModeService.totalMinutes * 60;
-    final progress = remainingSeconds / totalSeconds;
-
-    // Determine color based on remaining time
-    Color timerColor = Colors.green;
-    if (remainingSeconds < 300) {
-      // Less than 5 minutes
-      timerColor = Colors.red;
-    } else if (remainingSeconds < 600) {
-      // Less than 10 minutes
-      timerColor = Colors.orange;
-    }
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Large circular timer
-        Container(
-          width: 220,
-          height: 220,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Progress circle
-              SizedBox(
-                width: 220,
-                height: 220,
-                child: CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 12,
-                  backgroundColor: Colors.grey.shade300,
-                  valueColor: AlwaysStoppedAnimation<Color>(timerColor),
-                ),
-              ),
-
-              // Time text
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    _kidsModeService.remainingTimeFormatted,
-                    style: TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      color: timerColor,
-                      fontFamily: 'monospace',
+          child: _isLoading
+              ? Center(child: CircularProgressIndicator(color: Colors.white))
+              : Column(
+                  children: [
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.arrow_back, color: Colors.white),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          Expanded(
+                            child: Text(
+                              '👶 Kids Mode',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          SizedBox(width: 48), // Balance back button
+                        ],
+                      ),
                     ),
-                  ),
-                  Text(
-                    'minutes left',
-                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
 
-        SizedBox(height: 30),
+                    // Main Content
+                    Expanded(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Welcome message
+                              Text(
+                                'Welcome to Kids Mode!',
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 10),
+                              Text(
+                                'Set a timer to manage screen time',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white.withOpacity(0.9),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
 
-        // Encouraging message
-        Container(
-          margin: EdgeInsets.symmetric(horizontal: 30),
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.8),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 10,
-                offset: Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Icon(
-                remainingSeconds < 300 ? Icons.timer_outlined : Icons.thumb_up,
-                size: 32,
-                color: timerColor,
-              ),
-              SizedBox(height: 8),
-              Text(
-                _getEncouragingMessage(remainingSeconds),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.purple.shade700,
+                              SizedBox(height: 60),
+
+                              // Single prominent timer container
+                              GestureDetector(
+                                onTap: _onSetTimerTapped,
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 280,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(30),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.3),
+                                        blurRadius: 30,
+                                        spreadRadius: 5,
+                                        offset: Offset(0, 15),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: _onSetTimerTapped,
+                                      borderRadius: BorderRadius.circular(30),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          // Timer icon/animation
+                                          Container(
+                                            width: 120,
+                                            height: 120,
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  Colors.purple.shade400,
+                                                  Colors.deepPurple.shade600,
+                                                ],
+                                              ),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.timer,
+                                              size: 70,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+
+                                          SizedBox(height: 25),
+
+                                          // Action text
+                                          Text(
+                                            'Set timer for your child',
+                                            style: TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.purple.shade700,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+
+                                          SizedBox(height: 10),
+
+                                          // Subtitle
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 20,
+                                            ),
+                                            child: Text(
+                                              _isPinSet
+                                                  ? 'Tap to choose screen time duration'
+                                                  : 'Tap to set up parental controls',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              SizedBox(height: 40),
+
+                              // Info text
+                              Container(
+                                padding: EdgeInsets.all(15),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        _isPinSet
+                                            ? 'When the timer expires, the device will be locked with an alarm'
+                                            : 'You\'ll need to create a secure PIN before setting a timer',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
         ),
-
-        SizedBox(height: 20),
-
-        // Fun stats
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildStatCard(
-              icon: Icons.access_time,
-              label: 'Total Time',
-              value: '${_kidsModeService.totalMinutes} min',
-            ),
-            _buildStatCard(
-              icon: Icons.phone_android,
-              label: 'Used Time',
-              value:
-                  '${_kidsModeService.totalMinutes - _kidsModeService.remainingMinutes} min',
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInactiveUI() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.timer_off, size: 100, color: Colors.grey.shade400),
-          SizedBox(height: 20),
-          Text(
-            'No Timer Active',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          SizedBox(height: 10),
-          Text(
-            'Ask your parent to set screen time',
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-          ),
-        ],
       ),
     );
-  }
-
-  Widget _buildStatCard({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 3)),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: Colors.purple.shade700, size: 30),
-          SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-          ),
-          SizedBox(height: 3),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.purple.shade700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getEncouragingMessage(int secondsLeft) {
-    if (secondsLeft < 60) {
-      return '⏰ Almost time to stop!';
-    } else if (secondsLeft < 300) {
-      return '🎯 Just a few more minutes!';
-    } else if (secondsLeft < 600) {
-      return '👍 You\'re doing great!';
-    } else {
-      return '🎉 Enjoy your screen time!';
-    }
   }
 }

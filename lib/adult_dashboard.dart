@@ -131,9 +131,8 @@ class AdultDashboardPage extends StatelessWidget {
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () async {
-                Navigator.pop(context); // Close drawer first
+                Navigator.pop(context); 
 
-                // Clear mode selection so user can choose again
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.remove('mode_selected');
                 await prefs.remove('selected_mode');

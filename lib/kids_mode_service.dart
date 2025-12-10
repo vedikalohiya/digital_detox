@@ -91,14 +91,10 @@ class KidsModeService extends ChangeNotifier {
         print('📅 Expiry time: $_expiryTime');
       } else {
         // Timer expired while app was closed/backgrounded
-        // Show blocking overlay immediately
         print('⏰ Kids Mode timer expired while app was closed');
         _remainingSeconds = 0;
 
-        // Show overlay since timer actually expired
-        _overlayService ??= KidsOverlayService();
-        await _overlayService!.showBlockingOverlay();
-
+        // Call expiry callback which will navigate to blocking screen
         onTimerExpired?.call();
         notifyListeners();
       }
@@ -198,23 +194,12 @@ class KidsModeService extends ChangeNotifier {
     print('📊 _isActive: $_isActive');
     print('📊 _remainingSeconds: $_remainingSeconds');
 
-    // Always show overlay when timer expires during active countdown
+    // Call the callback which will navigate to blocking screen in the app
     if (_countdownTimer != null || _isActive) {
-      print('🚀 Attempting to show blocking overlay...');
-
-      // Show system-wide overlay
-      _overlayService ??= KidsOverlayService();
-
-      try {
-        await _overlayService!.showBlockingOverlay();
-        print('✅ Overlay shown successfully');
-      } catch (e) {
-        print('❌ Error showing overlay: $e');
-      }
-
+      print('🚀 Timer expired - calling expiry callback');
       onTimerExpired?.call();
     } else {
-      print('⚠️ Timer expired but no active countdown - skipping overlay');
+      print('⚠️ Timer expired but no active countdown - skipping callback');
     }
 
     notifyListeners();

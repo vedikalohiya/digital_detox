@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'parent_pin_service.dart';
+import 'kids_alarm_service.dart';
 
 class KidsOverlayService {
   static final KidsOverlayService _instance = KidsOverlayService._internal();
@@ -37,6 +38,10 @@ class KidsOverlayService {
       );
       if (!hasPermission && !await requestOverlayPermission()) return;
 
+      // Start alarm in overlay
+      final alarmService = KidsAlarmService();
+      await alarmService.playAlarm();
+
       await FlutterOverlayWindow.showOverlay(
         enableDrag: false,
         overlayTitle: "Screen Time Over",
@@ -47,12 +52,18 @@ class KidsOverlayService {
         width: WindowSize.matchParent,
       );
       _isOverlayActive = true;
-    } catch (e) {}
+    } catch (e) {
+      print('❌ Error showing overlay: $e');
+    }
   }
 
   Future<void> closeOverlay() async {
     if (!_isOverlayActive) return;
     try {
+      // Stop alarm when closing overlay
+      final alarmService = KidsAlarmService();
+      await alarmService.stopAlarm();
+
       await FlutterOverlayWindow.closeOverlay();
       _isOverlayActive = false;
     } catch (_) {}

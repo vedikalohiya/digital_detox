@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lottie/lottie.dart';
 import 'dashboard.dart';
-import 'kids_mode_setup.dart';
-import 'parent_pin_service.dart';
+import 'kids_mode_dashboard.dart';
 
 /// Mode selector screen - first screen shown on app launch
 /// Allows user to choose between Adult Mode or Kids Mode
@@ -18,7 +16,6 @@ class ModeSelector extends StatefulWidget {
 class _ModeSelectorState extends State<ModeSelector>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
-  final ParentPinService _pinService = ParentPinService();
 
   @override
   void initState() {
@@ -53,87 +50,10 @@ class _ModeSelectorState extends State<ModeSelector>
     await prefs.setBool('mode_selected', true);
     await prefs.setString('selected_mode', 'kids');
 
-    // Check if parent PIN is set
-    final isPinSet = await _pinService.isPinSet();
-
-    if (!isPinSet) {
-      // First time using Kids Mode - parent must set PIN
-      _showFirstTimeSetup();
-    } else {
-      // PIN already set - go to Kids Mode setup (set timer)
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => KidsModeSetup()),
-      );
-    }
-  }
-
-  void _showFirstTimeSetup() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.security, color: Colors.orange),
-            SizedBox(width: 10),
-            Text('Parent Setup Required'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'First time using Kids Mode?',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Parents must create a PIN code to:\n'
-              '• Set screen time limits\n'
-              '• Unlock the device when time expires\n'
-              '• Protect settings from changes',
-            ),
-            SizedBox(height: 15),
-            Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.warning_amber, color: Colors.orange),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Keep your PIN safe! It cannot be recovered.',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => KidsModeSetup()),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
-            child: Text('Continue'),
-          ),
-        ],
-      ),
+    // Navigate directly to Kids Mode Dashboard
+    // The dashboard will handle PIN setup if needed
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => KidsModeDashboard()),
     );
   }
 

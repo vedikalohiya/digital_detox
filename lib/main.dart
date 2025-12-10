@@ -1,22 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'firebase_options.dart';
 import 'landing_page.dart';
 import 'kids_mode_dashboard.dart';
 import 'kids_mode_service.dart';
-import 'kids_overlay_service.dart';
-
-@pragma("vm:entry-point")
-void overlayMain() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: KidsOverlayBlockingScreen(),
-    ),
-  );
-}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
