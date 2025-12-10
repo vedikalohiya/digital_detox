@@ -43,9 +43,7 @@ class _KidsModeDashboardState extends State<KidsModeDashboard> {
     } else {
       // PIN already set - go directly to timer selection
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => const KidsTimerSelection(),
-        ),
+        MaterialPageRoute(builder: (context) => const KidsTimerSelection()),
       );
     }
   }
